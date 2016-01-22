@@ -8,7 +8,7 @@ import org.apache.commons.collections4.Predicate;
 
 import java.util.List;
 
-public class TesterPlay {
+public class TestReport {
 
   private long issuesReported = 0;
   private long possibleInflations = 0;
@@ -52,7 +52,7 @@ public class TesterPlay {
    * @param issuesByUser
    *          Issues reported previous to a release.
    */
-  public TesterPlay(User user, List<ExtendedIssue> issuesByUser) {
+  public TestReport(User user, List<ExtendedIssue> issuesByUser) {
     this.issuesReported = issuesByUser.size();
     this.severeIssues = IterableUtils.countMatches(issuesByUser, SEVERE);
     this.nonSevereIssues = IterableUtils.countMatches(issuesByUser, NON_SEVERE);

@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class GenerateGameCsvFile {
+public class GenerateGameDataPoints {
 
-  private static Logger logger = Logger.getLogger(GenerateGameCsvFile.class.getName());
+  private static Logger logger = Logger.getLogger(GenerateGameDataPoints.class.getName());
 
   private static final String BOARD_ID = "2";
   private static final boolean ONLY_BUGS = true;
