@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class PriorityInflationStageGame {
+public class TestingEffortPerRelease {
 
   protected static final Integer NEXT_RELEASE = 0;
 
   private Long developerProductivity;
   private Long testerProductivity;
-
+  private Long releaseInflation;
+  private Version release;
   private List<TesterBehaviour> testingResults = null;
 
   public static Predicate<ExtendedIssue> FIXED_NEXT_RELEASE = new Predicate<ExtendedIssue>() {
@@ -37,10 +38,12 @@ public class PriorityInflationStageGame {
    * @param issuesPerRelease
    *          Issues reported prior to the release.
    */
-  public PriorityInflationStageGame(Version release, Set<User> reportersPerBoard,
+  public TestingEffortPerRelease(Version release, Set<User> reportersPerBoard,
       List<ExtendedIssue> issuesPerRelease) {
+    this.release = release;
     this.testingResults = new ArrayList<>();
     this.developerProductivity = IterableUtils.countMatches(issuesPerRelease, FIXED_NEXT_RELEASE);
+    this.releaseInflation = IterableUtils.countMatches(issuesPerRelease, TestReport.INFLATED);
     this.testerProductivity = (long) issuesPerRelease.size();
 
     for (final User user : reportersPerBoard) {
@@ -48,7 +51,7 @@ public class PriorityInflationStageGame {
       List<List<ExtendedIssue>> issuesByUser = IterableUtils.partition(issuesPerRelease,
           equalsPredicate);
 
-      TesterBehaviour testerPlay = new TesterBehaviour(user, release, issuesByUser.get(0));
+      TesterBehaviour testerPlay = new TesterBehaviour(user, this, issuesByUser.get(0));
 
       if (testerPlay.getTestReport().getIssuesReported() > 0) {
         this.testingResults.add(testerPlay);
@@ -69,11 +72,20 @@ public class PriorityInflationStageGame {
     return developerProductivity;
   }
 
+  public Long getReleaseInflation() {
+    return releaseInflation;
+  }
+
   public Long getTesterProductivity() {
     return testerProductivity;
   }
 
-  public List<TesterBehaviour> getTestingResults() {
+  public List<TesterBehaviour> getTesterBehaviours() {
     return testingResults;
   }
+
+  public Version getRelease() {
+    return release;
+  }
+
 }

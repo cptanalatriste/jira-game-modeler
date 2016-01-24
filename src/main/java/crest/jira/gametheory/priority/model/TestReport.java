@@ -16,7 +16,7 @@ public class TestReport {
   private long nonSevereIssues = 0;
   private long defaultIssues = 0;
 
-  private static Predicate<ExtendedIssue> INFLATED = new Predicate<ExtendedIssue>() {
+  public static Predicate<ExtendedIssue> INFLATED = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
       return issue.isProbablyAnInflation();
