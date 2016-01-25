@@ -23,10 +23,10 @@ public class TestReport {
     }
   };
 
-  private static Predicate<ExtendedIssue> SEVERE = new Predicate<ExtendedIssue>() {
+  private static Predicate<ExtendedIssue> SEVERE_NOT_INFLATED = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
-      return issue.isSevere();
+      return issue.isSevere() && !issue.isProbablyAnInflation();
     }
   };
 
@@ -54,7 +54,7 @@ public class TestReport {
    */
   public TestReport(User user, List<ExtendedIssue> issuesByUser) {
     this.issuesReported = issuesByUser.size();
-    this.severeIssues = IterableUtils.countMatches(issuesByUser, SEVERE);
+    this.severeIssues = IterableUtils.countMatches(issuesByUser, SEVERE_NOT_INFLATED);
     this.nonSevereIssues = IterableUtils.countMatches(issuesByUser, NON_SEVERE);
     this.defaultIssues = IterableUtils.countMatches(issuesByUser, DEFAULT);
     this.possibleInflations = IterableUtils.countMatches(issuesByUser, INFLATED);
