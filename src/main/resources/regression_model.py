@@ -8,7 +8,7 @@ from sklearn import svm
 from sklearn import metrics
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1453832241205.csv'
+file_name = 'Tester_Behaviour_Board_2_1453842786993.csv'
 
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
