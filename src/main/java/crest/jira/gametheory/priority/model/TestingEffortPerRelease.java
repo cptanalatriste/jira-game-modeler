@@ -18,8 +18,8 @@ public class TestingEffortPerRelease {
   private Long developerProductivity;
   private Long testerProductivity;
   private Long releaseInflation;
-  private Long releaseSeverity;
-  private long releaseNonSeverity;
+  private Long releaseNonInflatedSeverity;
+  private long releaseReportedNonSeverity;
   private Version release;
   private List<TesterBehaviour> testingResults = null;
 
@@ -46,9 +46,10 @@ public class TestingEffortPerRelease {
     this.testingResults = new ArrayList<>();
     this.developerProductivity = IterableUtils.countMatches(issuesPerRelease, FIXED_NEXT_RELEASE);
     this.releaseInflation = IterableUtils.countMatches(issuesPerRelease, TestReport.INFLATED);
-    this.releaseSeverity = IterableUtils.countMatches(issuesPerRelease,
-        TestReport.SEVERE_NOT_INFLATED);
-    this.releaseNonSeverity = IterableUtils.countMatches(issuesPerRelease, TestReport.NON_SEVERE);
+    this.releaseNonInflatedSeverity = IterableUtils.countMatches(issuesPerRelease,
+        TestReport.SEVERE_FOUND);
+    this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesPerRelease,
+        TestReport.NON_SEVERE_REPORTED);
     this.testerProductivity = (long) issuesPerRelease.size();
 
     for (final User user : reportersPerBoard) {
@@ -81,12 +82,12 @@ public class TestingEffortPerRelease {
     return releaseInflation;
   }
 
-  public Long getReleaseSeverity() {
-    return releaseSeverity;
+  public Long getReleaseNonInflatedSeverity() {
+    return releaseNonInflatedSeverity;
   }
 
-  public long getReleaseNonSeverity() {
-    return releaseNonSeverity;
+  public long getReleaseReportedNonSeverity() {
+    return releaseReportedNonSeverity;
   }
 
   public Long getTestTeamProductivity() {

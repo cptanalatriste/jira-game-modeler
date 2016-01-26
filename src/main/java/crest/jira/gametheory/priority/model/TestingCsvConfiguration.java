@@ -13,18 +13,12 @@ public class TestingCsvConfiguration {
   public static final String POSSIBLE_INFLATIONS = "Possible Inflations";
   public static final String SEVERE_ISSUES = "Severe Issues";
   public static final String DEFAULT_ISSUES = "Default Issues";
-  public static final String NON_SEVERE_ISSUES = "Non-Severe Issues";
+  public static final String NON_SEVERE_ISSUES_REPORTED = "Non-Severe Issues";
+  public static final String NON_SEVERE_ISSUES_FOUND = "Non-Severe Issues Found";
 
   public static final String EXTERNAL_INFLATION = "External Inflation";
   public static final String NEXT_RELEASE_FIXES = "Next Release Fixes";
 
-  public static final String SEVERE_TIMES_INFLATION = "Severe times Inflation";
-  public static final String INFLATION_SQUARED = "Inflation squared";
-  public static final String PRODUCTIVITY_RATIO = "Productivity Ratio";
-  public static final String INFLATION_RATIO = "Inflation Ratio";
-  public static final String EXTERNAL_INFLATION_RATIO = "External Inflation Ratio";
-  public static final String SEVERITY_RATIO = "Severity Ratio";
-  public static final String SUCCESS_RATIO = "Success Ratio";
   public static final String EXTERNAL_SEVERITY = "External Severity";
   public static final String SEVERE_FIX_PROBABILITY = "Severe Fix Probability";
   public static final String NON_SEVERE_FIX_PROBABILITY = "Non Severe Fix Probability";
