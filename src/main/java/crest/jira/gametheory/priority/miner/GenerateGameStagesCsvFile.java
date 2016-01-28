@@ -25,16 +25,16 @@ import java.util.logging.Logger;
 
 public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
 
-  public GenerateGameStagesCsvFile() {
-    // TODO(cgavidia): This is wrong. Fix later.
-    super(GenerateConsolidatedCsvFiles.FOLDER_NAME);
-  }
-
   private static Logger logger = Logger.getLogger(GenerateGameStagesCsvFile.class.getName());
 
   private static final String BOARD_ID = "2";
   private static final boolean ONLY_BUGS = true;
   private static final String TESTER_BEHAVIOUR = "Tester_Behaviour_Board_" + BOARD_ID;
+
+  public GenerateGameStagesCsvFile() {
+    // TODO(cgavidia): This is wrong. Fix later.
+    super(GenerateConsolidatedCsvFiles.FOLDER_NAME);
+  }
 
   /**
    * Explores the JIRA Issue's database to generate a CSV file of Priority

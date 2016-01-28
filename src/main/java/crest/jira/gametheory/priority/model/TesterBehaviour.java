@@ -3,13 +3,14 @@ package crest.jira.gametheory.priority.model;
 import crest.jira.data.miner.csv.CsvExportSupport;
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.retriever.model.User;
+import crest.jira.gametheory.priority.regression.DataEntry;
 
 import org.apache.commons.collections4.IterableUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TesterBehaviour implements CsvExportSupport {
+public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   private TestReport testReport;
 
@@ -174,4 +175,14 @@ public class TesterBehaviour implements CsvExportSupport {
     return headerAsList.toArray(new String[headerAsList.size()]);
   }
 
+  @Override
+  public double getRegressandValue() {
+    return this.nextReleaseFixes;
+  }
+
+  @Override
+  public double[] getRegressorValue() {
+    return new double[] { this.getExpectedInflatedFixes(), this.getExpectedSevereFixes(),
+        this.getExpectedNonSevereFixes() };
+  }
 }
