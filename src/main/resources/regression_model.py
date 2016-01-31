@@ -15,6 +15,7 @@ file_name = 'Tester_Behaviour_Board_2_1453842786993.csv'
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
 target_column = 'Next Release Fixes'
+strategy_column = 'Possible Inflations'
 
 
 def load_game_dataset():
@@ -24,6 +25,10 @@ def load_game_dataset():
     print 'MAX: Next Release Fixes', np.max(data_frame[target_column])
     print 'MIN: Next Release Fixes', np.min(data_frame[target_column])
     print 'MEAN: Next Release Fixes', np.mean(data_frame[target_column])
+  
+    print 'MAX: Possible Inflations', np.max(data_frame[strategy_column])
+    print 'MIN: Possible Inflations', np.min(data_frame[strategy_column])
+    print 'MEAN: Possible Inflations', np.mean(data_frame[strategy_column])  
   
     return data_frame
     
@@ -96,10 +101,11 @@ data_frame = load_game_dataset()
 release_data_frame = load_release_dataset(data_frame)
 
 #Plotting external event data
-fig, axes = plt.subplots(3, 1, figsize=(15, 12))
-plot_external_event(data_frame, 'Severe Issues', axes[0])
-plot_external_event(data_frame, 'Non-Severe Issues Found', axes[1])
-plot_external_event(release_data_frame, 'Developer Productivity', axes[2])
+fig, axes = plt.subplots(4, 1, figsize=(15, 12))
+plot_external_event(data_frame, 'Possible Inflations', axes[0])
+plot_external_event(data_frame, 'Severe Issues', axes[1])
+plot_external_event(data_frame, 'Non-Severe Issues Found', axes[2])
+plot_external_event(release_data_frame, 'Developer Productivity', axes[3])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)

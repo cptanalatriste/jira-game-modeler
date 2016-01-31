@@ -6,11 +6,15 @@ import crest.jira.data.retriever.model.User;
 import crest.jira.gametheory.priority.regression.DataEntry;
 
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.csv.CSVRecord;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class TesterBehaviour implements CsvExportSupport, DataEntry {
+
+  private static Logger logger = Logger.getLogger(TesterBehaviour.class.getName());
 
   private TestReport testReport;
 
@@ -18,6 +22,21 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   private Long nextReleaseFixes;
   private User user;
   private TestingEffortPerRelease testingEffort;
+
+  /**
+   * Percentage of non-severe issues that will be inflated.
+   */
+  private double inflationRatio;
+  private double expectedSevereFixes;
+  private double expectedInflatedFixes;
+  private double expectedNonSevereFixes;
+
+  private double expectedFixes;
+
+  public TesterBehaviour(TestingEffortPerRelease releaseTestingEffort) {
+    this.testReport = new TestReport();
+    this.testingEffort = releaseTestingEffort;
+  }
 
   /**
    * Stores the behavior of a Tester on an Specific release.
@@ -34,8 +53,57 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     this.user = user;
     this.testingEffort = testingEffort;
     this.testReport = new TestReport(user, issuesByUser);
+
     this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
         TestingEffortPerRelease.FIXED_NEXT_RELEASE);
+    this.calculateRegressionFields();
+  }
+
+  /**
+   * Get's an instance from a CSV Record.
+   * 
+   * @param csvRecord
+   *          CSV Record.
+   */
+  public TesterBehaviour(CSVRecord csvRecord) {
+    this.expectedInflatedFixes = Double
+        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES));
+    this.expectedSevereFixes = Double
+        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES));
+    this.expectedNonSevereFixes = Double
+        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES));
+    this.nextReleaseFixes = Long
+        .parseLong(csvRecord.get(TestingCsvConfiguration.NEXT_RELEASE_FIXES));
+    this.expectedFixes = Double.parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_FIXES));
+  }
+
+  /**
+   * The number of inflated issues must be less or equal than the number of
+   * non-severe issues found. In case this situation is detected, this logic
+   * will enforce the invariant.
+   */
+  public void enforceInvariants() {
+    if (this.testReport.getInflatedReports() > this.testReport.getNonSevereIssuesFound()) {
+      logger.fine("INVARINT VIOLATED! this.testReport.getInflatedReports() "
+          + this.testReport.getInflatedReports() + " this.testReport.getNonSevereIssuesFound() "
+          + this.testReport.getNonSevereIssuesFound());
+      this.testReport.setInflatedReports(this.testReport.getNonSevereIssuesFound());
+    }
+  }
+
+  /**
+   * After all the proper values are being set, the expected number of fixes per
+   * release is estimated.
+   */
+  public void calculateRegressionFields() {
+    this.expectedSevereFixes = this.testReport.getSevereIssuesFound()
+        * this.getFixProbabilityForSevere();
+    this.expectedInflatedFixes = this.testReport.getInflatedReports()
+        * this.getFixProbabilityForSevere();
+    this.expectedNonSevereFixes = this.testReport.getNonSevereIssuesReported()
+        * this.getFixProbabilityForNonSevere();
+    this.expectedFixes = this.getExpectedSevereFixes() + this.getExpectedNonSevereFixes()
+        + this.getExpectedInflatedFixes();
   }
 
   public TestReport getTestReport() {
@@ -57,7 +125,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   // TODO(cgavidia): Evaluate if this aggregation method is appropriate. The
   // other implies an explosion in dimensionality.
   public Long getExternalInflation() {
-    return this.testingEffort.getReleaseInflation() - this.testReport.getPossibleInflations();
+    return this.testingEffort.getReleaseInflation() - this.testReport.getInflatedReports();
   }
 
   public Long getExternalSeverity() {
@@ -72,7 +140,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
     double probability = developerProductivity / releaseReportedSeverity;
 
-    if (probability > 1) {
+    if (probability > 1 || releaseReportedSeverity == 0) {
       probability = 1;
     }
 
@@ -85,34 +153,34 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
         - this.testingEffort.getReleaseInflation()
         - this.testingEffort.getReleaseNonInflatedSeverity();
 
-    double probability = productivityRemaining / this.testingEffort.getReleaseReportedNonSeverity();
+    long releaseReportedNonSeverity = this.testingEffort.getReleaseReportedNonSeverity();
+    double probability = productivityRemaining / releaseReportedNonSeverity;
 
     if (probability < 0) {
       return 0.0;
     }
 
-    if (probability > 1) {
-      return 1.1;
+    if (probability > 1 || releaseReportedNonSeverity == 0) {
+      return 1.0;
     }
 
     return probability;
   }
 
   private Double getExpectedSevereFixes() {
-    return this.testReport.getSevereIssuesFound() * this.getFixProbabilityForSevere();
+    return expectedSevereFixes;
   }
 
   private Double getExpectedInflatedFixes() {
-    return this.testReport.getPossibleInflations() * this.getFixProbabilityForSevere();
+    return expectedInflatedFixes;
   }
 
   private Double getExpectedNonSevereFixes() {
-    return this.testReport.getNonSevereIssuesReported() * this.getFixProbabilityForNonSevere();
+    return expectedNonSevereFixes;
   }
 
-  private Double getExpectedFixes() {
-    return this.getExpectedSevereFixes() + this.getExpectedNonSevereFixes()
-        + this.getExpectedInflatedFixes();
+  public Double getExpectedFixes() {
+    return expectedFixes;
   }
 
   @Override
@@ -126,7 +194,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     recordAsList.add(this.testingEffort.getReleaseInflation());
 
     recordAsList.add(this.testReport.getIssuesReported());
-    recordAsList.add(this.testReport.getPossibleInflations());
+    recordAsList.add(this.testReport.getInflatedReports());
     recordAsList.add(this.testReport.getSevereIssuesFound());
     recordAsList.add(this.testReport.getNonSevereIssuesReported());
     recordAsList.add(this.testReport.getNonSevereIssuesFound());
@@ -157,7 +225,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
     headerAsList.add(TestingCsvConfiguration.ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.POSSIBLE_INFLATIONS);
-    headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES);
+    headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_FOUND);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND);
 
@@ -175,6 +243,14 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return headerAsList.toArray(new String[headerAsList.size()]);
   }
 
+  public double getInflationRatio() {
+    return inflationRatio;
+  }
+
+  public void setInflationRatio(double inflationRatio) {
+    this.inflationRatio = inflationRatio;
+  }
+
   @Override
   public double getRegressandValue() {
     return this.nextReleaseFixes;
@@ -185,4 +261,10 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return new double[] { this.getExpectedInflatedFixes(), this.getExpectedSevereFixes(),
         this.getExpectedNonSevereFixes() };
   }
+
+  @Override
+  public double getExpectedRegresandValue() {
+    return this.expectedFixes;
+  }
+
 }

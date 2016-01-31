@@ -30,6 +30,10 @@ public class TestingEffortPerRelease {
     }
   };
 
+  public TestingEffortPerRelease() {
+    this.testingResults = new ArrayList<>();
+  }
+
   /**
    * Represents the Priority Inflation game for a single release.
    * 
@@ -74,8 +78,30 @@ public class TestingEffortPerRelease {
     };
   }
 
+  /**
+   * Based on the Tester Behaviors stored, this methods calculates the inflation
+   * of a release, the real severity, and the non-severity reported.
+   */
+  public void calculateReleaseMetrics() {
+
+    this.releaseInflation = 0L;
+    this.releaseNonInflatedSeverity = 0L;
+    this.releaseReportedNonSeverity = 0;
+
+    for (TesterBehaviour testerBehaviour : this.testingResults) {
+      releaseInflation += testerBehaviour.getTestReport().getInflatedReports();
+      releaseNonInflatedSeverity += testerBehaviour.getTestReport().getSevereIssuesFound();
+      releaseReportedNonSeverity += testerBehaviour.getTestReport().getNonSevereIssuesFound()
+          - testerBehaviour.getTestReport().getInflatedReports();
+    }
+  }
+
   public Long getDeveloperProductivity() {
     return developerProductivity;
+  }
+
+  public void setDeveloperProductivity(Long developerProductivity) {
+    this.developerProductivity = developerProductivity;
   }
 
   public Long getReleaseInflation() {

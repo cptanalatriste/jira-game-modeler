@@ -6,4 +6,6 @@ public interface DataEntry {
 
   double[] getRegressorValue();
 
+  double getExpectedRegresandValue();
+
 }

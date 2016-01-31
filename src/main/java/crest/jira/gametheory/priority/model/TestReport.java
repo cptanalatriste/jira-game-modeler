@@ -45,6 +45,9 @@ public class TestReport {
     }
   };
 
+  public TestReport() {
+  }
+
   /**
    * Represents the behavior of a Tester for an specific release.
    * 
@@ -81,7 +84,20 @@ public class TestReport {
     return nonSevereIssuesReported;
   }
 
-  public long getPossibleInflations() {
+  public void setNonSevereIssuesReported(long nonSevereIssuesReported) {
+    this.nonSevereIssuesReported = nonSevereIssuesReported;
+  }
+
+  public long getInflatedReports() {
     return possibleInflations;
   }
+
+  public void setInflatedReports(long possibleInflations) {
+    this.possibleInflations = possibleInflations;
+  }
+
+  public void setSevereIssuesFound(long severeIssuesFound) {
+    this.severeIssuesFound = severeIssuesFound;
+  }
+
 }

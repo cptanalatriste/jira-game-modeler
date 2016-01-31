@@ -11,7 +11,7 @@ public class TestingCsvConfiguration {
 
   public static final String ISSUES_REPORTED = "Issues Reported";
   public static final String POSSIBLE_INFLATIONS = "Possible Inflations";
-  public static final String SEVERE_ISSUES = "Severe Issues";
+  public static final String SEVERE_ISSUES_FOUND = "Severe Issues";
   public static final String DEFAULT_ISSUES = "Default Issues";
   public static final String NON_SEVERE_ISSUES_REPORTED = "Non-Severe Issues";
   public static final String NON_SEVERE_ISSUES_FOUND = "Non-Severe Issues Found";
