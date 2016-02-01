@@ -1,5 +1,7 @@
 package crest.jira.gametheory.priority.game;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +46,8 @@ public class EstimatedGame {
   public static void loadStrategyProfiles(int playerIndex, double[] playerStrategies,
       EstimatedGame estimatedGame) {
     if (playerIndex >= estimatedGame.getNumberOfPlayers()) {
-      estimatedGame.getStrategyProfiles().add(new ReleaseTestStrategyProfile(playerStrategies));
+      estimatedGame.getStrategyProfiles().add(new ReleaseTestStrategyProfile(
+          ArrayUtils.toObject(estimatedGame.getStrategySubset()), playerStrategies));
       return;
     } else if (playerIndex < estimatedGame.getNumberOfPlayers()) {
       for (double strategy : estimatedGame.getStrategySubset()) {

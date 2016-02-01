@@ -1,26 +1,35 @@
 package crest.jira.gametheory.priority.game;
 
+import crest.jira.data.miner.csv.CsvExportSupport;
 import crest.jira.gametheory.priority.model.TesterBehaviour;
+import crest.jira.gametheory.priority.model.TestingCsvConfiguration;
 import crest.jira.gametheory.priority.model.TestingEffortPerRelease;
 
 import org.apache.commons.math3.random.EmpiricalDistribution;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class ReleaseTestStrategyProfile {
+public class ReleaseTestStrategyProfile implements CsvExportSupport {
 
   private List<SummaryStatistics> payoffStatistics;
   private TestingEffortPerRelease releaseTestingEffort;
+  private int numberOfPlayers;
+  private List<Double> strategySubset;
 
   /**
    * Initializes a Strategy Profile by setting player actions.
    * 
+   * @param strategySubset
+   *          Strategies available
    * @param playerStrategies
    *          Array of strategies.
    */
-  public ReleaseTestStrategyProfile(double[] playerStrategies) {
+  public ReleaseTestStrategyProfile(Double[] strategySubset, double[] playerStrategies) {
+    this.numberOfPlayers = playerStrategies.length;
+    this.strategySubset = Arrays.asList(strategySubset);
     this.payoffStatistics = new ArrayList<>();
     this.releaseTestingEffort = new TestingEffortPerRelease();
 
@@ -56,12 +65,15 @@ public class ReleaseTestStrategyProfile {
       EmpiricalDistribution nonSevereFoundDistribution,
       EmpiricalDistribution devProductivityDistribution) {
 
-    for (int index = 0; index < samplesPerProfile; index += 1) {
+    for (int sampleIndex = 0; sampleIndex < samplesPerProfile; sampleIndex += 1) {
       // Assigning the stochastic data necessary for payoff calculations.
       long developerProductivity = (long) devProductivityDistribution.getNextValue();
       this.releaseTestingEffort.setDeveloperProductivity(developerProductivity);
 
       for (TesterBehaviour testerBehaviour : releaseTestingEffort.getTesterBehaviours()) {
+        // TODO(cgavidia): The distributions are based on a high-productivity
+        // team with a high-number of testers.
+        // The simplifications might overstate this.
         double severeIssuesFound = severeFoundDistribution.getNextValue();
         double nonSevereIssuesFound = nonSevereFoundDistribution.getNextValue();
         double inflatedReports = nonSevereIssuesFound * testerBehaviour.getInflationRatio();
@@ -80,7 +92,7 @@ public class ReleaseTestStrategyProfile {
           .size(); playerIndex += 1) {
         TesterBehaviour testerBehaviour = releaseTestingEffort.getTesterBehaviours()
             .get(playerIndex);
-        // TODO(cgavidia): Review the invariant enforcement
+        // TODO(cgavidia): Review 5the invariant enforcement
         // testerBehaviour.enforceInvariants();
         testerBehaviour.calculateRegressionFields();
 
@@ -94,7 +106,7 @@ public class ReleaseTestStrategyProfile {
   public String toString() {
     String strategyAsString = "";
 
-    for (int playerIndex = 0; playerIndex < payoffStatistics.size(); playerIndex += 1) {
+    for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex += 1) {
       TesterBehaviour testerBehaviour = this.releaseTestingEffort.getTesterBehaviours()
           .get(playerIndex);
       SummaryStatistics payoffStatistic = this.payoffStatistics.get(playerIndex);
@@ -106,6 +118,54 @@ public class ReleaseTestStrategyProfile {
     }
 
     return strategyAsString;
+  }
+
+  @Override
+  public List<Object> getCsvRecord() {
+    List<Double> strategyValueList = new ArrayList<>();
+    List<Integer> strategyIndexList = new ArrayList<>();
+    List<Double> payoffValueList = new ArrayList<>();
+
+    List<Object> recordAsList = new ArrayList<>();
+
+    for (int playerIndex = 0; playerIndex < this.numberOfPlayers; playerIndex += 1) {
+      TesterBehaviour testerBehaviour = this.releaseTestingEffort.getTesterBehaviours()
+          .get(playerIndex);
+      SummaryStatistics payoffStatistic = this.payoffStatistics.get(playerIndex);
+
+      double strategyValue = testerBehaviour.getInflationRatio();
+      int strategyIndex = strategySubset.indexOf(strategyValue);
+      double payoffValue = payoffStatistic.getMean();
+
+      strategyValueList.add(strategyValue);
+      strategyIndexList.add(strategyIndex);
+      payoffValueList.add(payoffValue);
+    }
+
+    recordAsList.addAll(strategyIndexList);
+    recordAsList.addAll(payoffValueList);
+    recordAsList.addAll(strategyValueList);
+
+    return recordAsList;
+  }
+
+  @Override
+  public String[] getCsvHeader() {
+    List<String> headerAsList = new ArrayList<String>();
+    for (int playerIndex = 0; playerIndex < this.numberOfPlayers; playerIndex += 1) {
+      headerAsList.add(TestingCsvConfiguration.STRATEGY_INDEX + playerIndex);
+    }
+
+    for (int playerIndex = 0; playerIndex < this.numberOfPlayers; playerIndex += 1) {
+      headerAsList.add(TestingCsvConfiguration.PAYOFF_VALUE + playerIndex);
+    }
+
+    for (int playerIndex = 0; playerIndex < this.numberOfPlayers; playerIndex += 1) {
+      headerAsList.add(TestingCsvConfiguration.STRATEGY_VALUE + playerIndex);
+    }
+
+    return headerAsList.toArray(new String[headerAsList.size()]);
+
   }
 
 }

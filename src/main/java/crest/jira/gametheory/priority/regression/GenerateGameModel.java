@@ -12,6 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.random.EmpiricalDistribution;
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public class GenerateGameModel {
   private static final int NUMBER_OF_PLAYERS = 3;
 
   // private static final int SAMPLES_PER_PROFILE = 500;
-  private static final int SAMPLES_PER_PROFILE = 10;
+  private static final int SAMPLES_PER_PROFILE = 5;
 
   // private static final int NUMBER_OF_PLAYERS = 15; This is the minimum value
   // saaw in data.
@@ -44,14 +45,16 @@ public class GenerateGameModel {
    * 
    * @param args
    *          Not used on this program.
+   * @throws IOException
+   *           File handling is risky
    */
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     List<CSVRecord> csvRecords = CsvUtils.getCsvRecords(CSV_FILE);
     generateRegressionModel(csvRecords);
     estimateGame(csvRecords);
   }
 
-  private static void estimateGame(List<CSVRecord> csvRecords) {
+  private static void estimateGame(List<CSVRecord> csvRecords) throws IOException {
     EmpiricalDistribution severeFoundDistribution = new EmpiricalDistribution();
     EmpiricalDistribution nonSevereFoundDistribution = new EmpiricalDistribution();
     EmpiricalDistribution devProductivityDistribution = new EmpiricalDistribution();
@@ -68,9 +71,11 @@ public class GenerateGameModel {
     for (ReleaseTestStrategyProfile strategyProfile : estimatedGame.getStrategyProfiles()) {
       strategyProfile.calculateAveragePayoffs(SAMPLES_PER_PROFILE, severeFoundDistribution,
           nonSevereFoundDistribution, devProductivityDistribution);
-
       logger.info(strategyProfile.toString());
     }
+
+    CsvUtils.generateCsvFile(GenerateConsolidatedCsvFiles.FOLDER_NAME, "Estimated_Game",
+        estimatedGame.getStrategyProfiles());
 
   }
 

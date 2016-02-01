@@ -148,7 +148,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   }
 
   private Double getFixProbabilityForNonSevere() {
-
+    //TODO(cgavidia): Evaluate numerator.
     double productivityRemaining = this.testingEffort.getDeveloperProductivity()
         - this.testingEffort.getReleaseInflation()
         - this.testingEffort.getReleaseNonInflatedSeverity();

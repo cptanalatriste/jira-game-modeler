@@ -26,5 +26,8 @@ public class TestingCsvConfiguration {
   public static final String EXPECTED_INFLATED_FIXES = "Expected Inflated Fixes";
   public static final String EXPECTED_NON_SEVERE_FIXES = "Expected Non Severe Fixes";
   public static final String EXPECTED_FIXES = "Expected Fixes";
+  public static final String STRATEGY_INDEX = "Strategy Index for Player ";
+  public static final String PAYOFF_VALUE = "Payoff Value for Player ";
+  public static final String STRATEGY_VALUE = "Strategy Value for Player ";
 
 }
