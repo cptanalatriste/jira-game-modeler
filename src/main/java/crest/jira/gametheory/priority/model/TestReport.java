@@ -15,6 +15,7 @@ public class TestReport {
   private long severeIssuesFound = 0;
   private long nonSevereIssuesReported = 0;
   private long nonSevereIssuesFound = 0;
+  private Double inflationRatio = 0.0;
 
   public static Predicate<ExtendedIssue> INFLATED = new Predicate<ExtendedIssue>() {
     @Override
@@ -62,10 +63,42 @@ public class TestReport {
     this.nonSevereIssuesFound = IterableUtils.countMatches(issuesByUser, NON_SEVERE_FOUND);
     this.nonSevereIssuesReported = IterableUtils.countMatches(issuesByUser, NON_SEVERE_REPORTED);
     this.possibleInflations = IterableUtils.countMatches(issuesByUser, INFLATED);
+
+    if (nonSevereIssuesFound != 0) {
+      this.inflationRatio = possibleInflations / (double) nonSevereIssuesFound;
+    }
+  }
+
+  /**
+   * Configures the metrics for a test report.
+   * 
+   * @param severeIssuesFound
+   *          Severe Issues Found.
+   * @param nonSevereIssuesFound
+   *          Non-Severe Issues Found.
+   * @param inflationRatio
+   *          Inflation Ratio.
+   */
+  public void configureReport(double severeIssuesFound, double nonSevereIssuesFound,
+      double inflationRatio) {
+    double issuesReported = severeIssuesFound + nonSevereIssuesFound;
+    double inflatedReports = nonSevereIssuesFound * inflationRatio;
+    long nonSevereIssuesReported = (long) (nonSevereIssuesFound - inflatedReports);
+
+    this.setSevereIssuesFound((long) severeIssuesFound);
+    this.setNonSevereIssuesFound((long) nonSevereIssuesFound);
+    this.setIssuesReported((long) issuesReported);
+    this.setInflatedReports((long) inflatedReports);
+    this.setNonSevereIssuesReported(nonSevereIssuesReported);
+
   }
 
   public long getIssuesReported() {
     return issuesReported;
+  }
+
+  public void setIssuesReported(long issuesReported) {
+    this.issuesReported = issuesReported;
   }
 
   public long getSevereIssuesFound() {
@@ -98,6 +131,10 @@ public class TestReport {
 
   public void setSevereIssuesFound(long severeIssuesFound) {
     this.severeIssuesFound = severeIssuesFound;
+  }
+
+  public Double getInflationRatio() {
+    return this.inflationRatio;
   }
 
 }

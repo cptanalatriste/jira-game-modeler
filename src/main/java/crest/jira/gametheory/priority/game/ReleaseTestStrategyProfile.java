@@ -57,18 +57,18 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
    *          Distribution for severe issues.
    * @param nonSevereFoundDistribution
    *          Distribution for non-severe issues.
-   * @param devProductivityDistribution
+   * @param devProductivityRatioDistribution
    *          Distribution for developer productivity.
    */
   public void calculateAveragePayoffs(int samplesPerProfile,
       EmpiricalDistribution severeFoundDistribution,
       EmpiricalDistribution nonSevereFoundDistribution,
-      EmpiricalDistribution devProductivityDistribution) {
+      EmpiricalDistribution devProductivityRatioDistribution) {
 
     for (int sampleIndex = 0; sampleIndex < samplesPerProfile; sampleIndex += 1) {
       // Assigning the stochastic data necessary for payoff calculations.
-      long developerProductivity = (long) devProductivityDistribution.getNextValue();
-      this.releaseTestingEffort.setDeveloperProductivity(developerProductivity);
+      double devProductivityRatio = devProductivityRatioDistribution.getNextValue();
+      this.releaseTestingEffort.setDeveloperProductivityRatio(devProductivityRatio);
 
       for (TesterBehaviour testerBehaviour : releaseTestingEffort.getTesterBehaviours()) {
         // TODO(cgavidia): The distributions are based on a high-productivity
@@ -76,13 +76,9 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
         // The simplifications might overstate this.
         double severeIssuesFound = severeFoundDistribution.getNextValue();
         double nonSevereIssuesFound = nonSevereFoundDistribution.getNextValue();
-        double inflatedReports = nonSevereIssuesFound * testerBehaviour.getInflationRatio();
-        long nonSevereIssuesReported = (long) (nonSevereIssuesFound - inflatedReports);
 
-        testerBehaviour.getTestReport().setSevereIssuesFound((long) severeIssuesFound);
-        testerBehaviour.getTestReport().setNonSevereIssuesFound((long) nonSevereIssuesFound);
-        testerBehaviour.getTestReport().setInflatedReports((long) inflatedReports);
-        testerBehaviour.getTestReport().setNonSevereIssuesReported(nonSevereIssuesReported);
+        testerBehaviour.getTestReport().configureReport(severeIssuesFound, nonSevereIssuesFound,
+            testerBehaviour.getInflationRatio());
       }
 
       // Performing payoff calculations.

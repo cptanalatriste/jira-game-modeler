@@ -68,6 +68,7 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
     List<TesterBehaviour> testerPlays = getStageGames(issuesInReleases, reportersPerBoard);
 
     logger.info("testerPlays.size()" + testerPlays.size());
+    // TODO(cgavidia): Include the inflatio ratio on the CSV file.
     generateCsvFile(TESTER_BEHAVIOUR, testerPlays);
   }
 

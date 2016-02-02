@@ -24,7 +24,7 @@ public class GenerateGameModel {
   private static Logger logger = Logger.getLogger(GenerateGameModel.class.getName());
 
   private static final String CSV_FILE = GenerateConsolidatedCsvFiles.FOLDER_NAME
-      + "Tester_Behaviour_Board_2_1453842786993.csv";
+      + "Tester_Behaviour_Board_2_1454406105631.csv";
 
   private static final int MAX_STRATEGY_VALUE = 1;
   // private static final int STRATEGY_SUBSET_SIZE = 5;
@@ -57,10 +57,10 @@ public class GenerateGameModel {
   private static void estimateGame(List<CSVRecord> csvRecords) throws IOException {
     EmpiricalDistribution severeFoundDistribution = new EmpiricalDistribution();
     EmpiricalDistribution nonSevereFoundDistribution = new EmpiricalDistribution();
-    EmpiricalDistribution devProductivityDistribution = new EmpiricalDistribution();
+    EmpiricalDistribution devProductivityRatioDistribution = new EmpiricalDistribution();
 
     loadDistributionData(csvRecords, severeFoundDistribution, nonSevereFoundDistribution,
-        devProductivityDistribution);
+        devProductivityRatioDistribution);
 
     EstimatedGame estimatedGame = new EstimatedGame(STRATEGY_SUBSET_SIZE, MAX_STRATEGY_VALUE,
         NUMBER_OF_PLAYERS);
@@ -70,7 +70,7 @@ public class GenerateGameModel {
 
     for (ReleaseTestStrategyProfile strategyProfile : estimatedGame.getStrategyProfiles()) {
       strategyProfile.calculateAveragePayoffs(SAMPLES_PER_PROFILE, severeFoundDistribution,
-          nonSevereFoundDistribution, devProductivityDistribution);
+          nonSevereFoundDistribution, devProductivityRatioDistribution);
       logger.info(strategyProfile.toString());
     }
 
@@ -82,10 +82,10 @@ public class GenerateGameModel {
   private static void loadDistributionData(List<CSVRecord> csvRecords,
       EmpiricalDistribution severeFoundDistribution,
       EmpiricalDistribution nonSevereFoundDistribution,
-      EmpiricalDistribution developerProductivityDistribution) {
+      EmpiricalDistribution devProductivityRatioDistribution) {
     ArrayList<Double> severeIssuesData = new ArrayList<>();
     ArrayList<Double> nonSevereIssuesData = new ArrayList<>();
-    HashMap<String, Double> developerProductivityData = new HashMap<>();
+    HashMap<String, Double> devProductivityData = new HashMap<>();
 
     for (CSVRecord csvRecord : csvRecords) {
       String release = csvRecord.get(TestingCsvConfiguration.RELEASE);
@@ -93,20 +93,22 @@ public class GenerateGameModel {
           .parseDouble(csvRecord.get(TestingCsvConfiguration.SEVERE_ISSUES_FOUND));
       double nonSevereIssuesFound = Double
           .parseDouble(csvRecord.get(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND));
-      double developerProductivity = Double
-          .parseDouble(csvRecord.get(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY));
+      double devProductityRatio = Double
+          .parseDouble(csvRecord.get(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO));
 
       severeIssuesData.add(severeIssuesFound);
       nonSevereIssuesData.add(nonSevereIssuesFound);
-      developerProductivityData.put(release, developerProductivity);
+      devProductivityData.put(release, devProductityRatio);
+
+      logger.fine("release " + release + " devProductityRatio " + devProductityRatio);
     }
 
     severeFoundDistribution.load(
         ArrayUtils.toPrimitive(severeIssuesData.toArray(new Double[severeIssuesData.size()])));
     nonSevereFoundDistribution.load(ArrayUtils
         .toPrimitive(nonSevereIssuesData.toArray(new Double[nonSevereIssuesData.size()])));
-    developerProductivityDistribution.load(ArrayUtils.toPrimitive(developerProductivityData.values()
-        .toArray(new Double[developerProductivityData.values().size()])));
+    devProductivityRatioDistribution.load(ArrayUtils.toPrimitive(
+        devProductivityData.values().toArray(new Double[devProductivityData.values().size()])));
   }
 
   private static void generateRegressionModel(List<CSVRecord> csvRecords) {

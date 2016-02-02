@@ -10,13 +10,16 @@ import org.apache.commons.collections4.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class TestingEffortPerRelease {
 
+  private static Logger logger = Logger.getLogger(TestingEffortPerRelease.class.getName());
   protected static final Integer NEXT_RELEASE = 0;
 
   private Long developerProductivity;
   private Long testerProductivity;
+  private Double developerProductivityRatio;
   private Long releaseInflation;
   private Long releaseNonInflatedSeverity;
   private long releaseReportedNonSeverity;
@@ -49,12 +52,14 @@ public class TestingEffortPerRelease {
     this.release = release;
     this.testingResults = new ArrayList<>();
     this.developerProductivity = IterableUtils.countMatches(issuesPerRelease, FIXED_NEXT_RELEASE);
+    this.testerProductivity = (long) issuesPerRelease.size();
+    this.developerProductivityRatio = this.developerProductivity
+        / ((double) this.testerProductivity);
     this.releaseInflation = IterableUtils.countMatches(issuesPerRelease, TestReport.INFLATED);
     this.releaseNonInflatedSeverity = IterableUtils.countMatches(issuesPerRelease,
         TestReport.SEVERE_FOUND);
     this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesPerRelease,
         TestReport.NON_SEVERE_REPORTED);
-    this.testerProductivity = (long) issuesPerRelease.size();
 
     for (final User user : reportersPerBoard) {
       Predicate<ExtendedIssue> equalsPredicate = getEqualsPredicate(user);
@@ -87,13 +92,20 @@ public class TestingEffortPerRelease {
     this.releaseInflation = 0L;
     this.releaseNonInflatedSeverity = 0L;
     this.releaseReportedNonSeverity = 0;
+    this.testerProductivity = 0L;
 
     for (TesterBehaviour testerBehaviour : this.testingResults) {
       releaseInflation += testerBehaviour.getTestReport().getInflatedReports();
       releaseNonInflatedSeverity += testerBehaviour.getTestReport().getSevereIssuesFound();
       releaseReportedNonSeverity += testerBehaviour.getTestReport().getNonSevereIssuesFound()
           - testerBehaviour.getTestReport().getInflatedReports();
+      testerProductivity += testerBehaviour.getTestReport().getIssuesReported();
     }
+
+    this.developerProductivity = (long) (this.testerProductivity * this.developerProductivityRatio);
+    logger.fine("this.testerProductivity " + this.testerProductivity
+        + " this.developerProductivityRatio " + this.developerProductivityRatio
+        + " this.developerProductivity " + this.developerProductivity);
   }
 
   public Long getDeveloperProductivity() {
@@ -102,6 +114,14 @@ public class TestingEffortPerRelease {
 
   public void setDeveloperProductivity(Long developerProductivity) {
     this.developerProductivity = developerProductivity;
+  }
+
+  public Double getDeveloperProductivityRatio() {
+    return this.developerProductivityRatio;
+  }
+
+  public void setDeveloperProductivityRatio(Double developerProductivityRatio) {
+    this.developerProductivityRatio = developerProductivityRatio;
   }
 
   public Long getReleaseInflation() {

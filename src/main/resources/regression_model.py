@@ -10,12 +10,12 @@ from sklearn import metrics
 from pandas import DataFrame
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1453842786993.csv'
+file_name = 'Tester_Behaviour_Board_2_1454411474055.csv'
 
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
 target_column = 'Next Release Fixes'
-strategy_column = 'Possible Inflations'
+strategy_column = 'Inflation Ratio'
 
 
 def load_game_dataset():
@@ -26,9 +26,9 @@ def load_game_dataset():
     print 'MIN: Next Release Fixes', np.min(data_frame[target_column])
     print 'MEAN: Next Release Fixes', np.mean(data_frame[target_column])
   
-    print 'MAX: Possible Inflations', np.max(data_frame[strategy_column])
-    print 'MIN: Possible Inflations', np.min(data_frame[strategy_column])
-    print 'MEAN: Possible Inflations', np.mean(data_frame[strategy_column])  
+    print 'MAX: ' + strategy_column, np.max(data_frame[strategy_column])
+    print 'MIN: ' + strategy_column, np.min(data_frame[strategy_column])
+    print 'MEAN: ' + strategy_column, np.mean(data_frame[strategy_column])  
   
     return data_frame
     
@@ -88,13 +88,17 @@ def plot_external_event(data_frame, event_column, ax):
 def load_release_dataset(data_frame):
     release_values = data_frame['Release'].unique()
     developer_productivity_values = []
+    dev_productivity_ratio_values = []
+
     
     for release in release_values:
         release_data = data_frame[data_frame['Release'].isin([release])]
         developer_productivity_values.append(release_data['Developer Productivity'].iloc[0])
+        dev_productivity_ratio_values.append(release_data['Developer Productivity Ratio'].iloc[0])
         
     return DataFrame({'Release': release_values,
-                      'Developer Productivity': developer_productivity_values})
+                      'Developer Productivity': developer_productivity_values,
+                      'Developer Productivity Ratio': dev_productivity_ratio_values})
 
 
 data_frame = load_game_dataset()
@@ -102,10 +106,10 @@ release_data_frame = load_release_dataset(data_frame)
 
 #Plotting external event data
 fig, axes = plt.subplots(4, 1, figsize=(15, 12))
-plot_external_event(data_frame, 'Possible Inflations', axes[0])
+plot_external_event(data_frame, strategy_column, axes[0])
 plot_external_event(data_frame, 'Severe Issues', axes[1])
 plot_external_event(data_frame, 'Non-Severe Issues Found', axes[2])
-plot_external_event(release_data_frame, 'Developer Productivity', axes[3])
+plot_external_event(release_data_frame, 'Developer Productivity Ratio', axes[3])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)

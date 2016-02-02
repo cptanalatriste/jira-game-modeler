@@ -148,7 +148,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   }
 
   private Double getFixProbabilityForNonSevere() {
-    //TODO(cgavidia): Evaluate numerator.
+    // TODO(cgavidia): Evaluate numerator.
     double productivityRemaining = this.testingEffort.getDeveloperProductivity()
         - this.testingEffort.getReleaseInflation()
         - this.testingEffort.getReleaseNonInflatedSeverity();
@@ -191,10 +191,12 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
     recordAsList.add(this.testingEffort.getDeveloperProductivity());
     recordAsList.add(this.testingEffort.getTestTeamProductivity());
+    recordAsList.add(this.testingEffort.getDeveloperProductivityRatio());
     recordAsList.add(this.testingEffort.getReleaseInflation());
 
     recordAsList.add(this.testReport.getIssuesReported());
     recordAsList.add(this.testReport.getInflatedReports());
+    recordAsList.add(this.testReport.getInflationRatio());
     recordAsList.add(this.testReport.getSevereIssuesFound());
     recordAsList.add(this.testReport.getNonSevereIssuesReported());
     recordAsList.add(this.testReport.getNonSevereIssuesFound());
@@ -221,10 +223,12 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.TESTER);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
+    headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
     headerAsList.add(TestingCsvConfiguration.RELEASE_INFLATION);
 
     headerAsList.add(TestingCsvConfiguration.ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.POSSIBLE_INFLATIONS);
+    headerAsList.add(TestingCsvConfiguration.INFLATION_RATIO);
     headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_FOUND);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND);
