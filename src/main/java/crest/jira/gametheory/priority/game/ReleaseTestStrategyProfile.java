@@ -11,8 +11,12 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class ReleaseTestStrategyProfile implements CsvExportSupport {
+
+  private static Logger logger = Logger.getLogger(ReleaseTestStrategyProfile.class.getName());
+  private static final String PAYOFF_NOT_READY = "NOT READY";
 
   private List<SummaryStatistics> payoffStatistics;
   private TestingEffortPerRelease releaseTestingEffort;
@@ -65,6 +69,10 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
       EmpiricalDistribution nonSevereFoundDistribution,
       EmpiricalDistribution devProductivityRatioDistribution) {
 
+    logger.info("Calculating payoff for profile " + this.toString());
+    logger.info("Executing " + samplesPerProfile + " samples");
+
+
     for (int sampleIndex = 0; sampleIndex < samplesPerProfile; sampleIndex += 1) {
       // Assigning the stochastic data necessary for payoff calculations.
       double devProductivityRatio = devProductivityRatioDistribution.getNextValue();
@@ -109,8 +117,14 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
 
       strategyAsString += "PLAYER " + playerIndex;
       strategyAsString += " Strategy " + testerBehaviour.getInflationRatio();
-      strategyAsString += " Payoff " + payoffStatistic.getMean();
+
+      String averagePayoff = PAYOFF_NOT_READY;
+      if (payoffStatistic.getN() > 0) {
+        averagePayoff = Double.toString(payoffStatistic.getMean());
+      }
+      strategyAsString += " Payoff " + averagePayoff;
       strategyAsString += "\t";
+
     }
 
     return strategyAsString;

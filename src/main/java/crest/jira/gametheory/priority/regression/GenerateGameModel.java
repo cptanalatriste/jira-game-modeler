@@ -27,17 +27,14 @@ public class GenerateGameModel {
       + "Tester_Behaviour_Board_2_1454406105631.csv";
 
   private static final int MAX_STRATEGY_VALUE = 1;
-  // private static final int STRATEGY_SUBSET_SIZE = 5;
   private static final int STRATEGY_SUBSET_SIZE = 3;
-
-  // private static final int NUMBER_OF_PLAYERS = 7;
-  private static final int NUMBER_OF_PLAYERS = 3;
-
-  // private static final int SAMPLES_PER_PROFILE = 500;
-  private static final int SAMPLES_PER_PROFILE = 5;
 
   // private static final int NUMBER_OF_PLAYERS = 15; This is the minimum value
   // saaw in data.
+  private static final int NUMBER_OF_PLAYERS = 10;
+
+  // private static final int SAMPLES_PER_PROFILE = 500;
+  private static final int SAMPLES_PER_PROFILE = 100;
 
   /**
    * Generates a regression model for the payoff function and estimates the
@@ -65,8 +62,7 @@ public class GenerateGameModel {
     EstimatedGame estimatedGame = new EstimatedGame(STRATEGY_SUBSET_SIZE, MAX_STRATEGY_VALUE,
         NUMBER_OF_PLAYERS);
 
-    logger.info(
-        "estimatedGame.getStrategyProfiles().size() " + estimatedGame.getStrategyProfiles().size());
+    logger.info("Profiles available" + estimatedGame.getStrategyProfiles().size());
 
     for (ReleaseTestStrategyProfile strategyProfile : estimatedGame.getStrategyProfiles()) {
       strategyProfile.calculateAveragePayoffs(SAMPLES_PER_PROFILE, severeFoundDistribution,

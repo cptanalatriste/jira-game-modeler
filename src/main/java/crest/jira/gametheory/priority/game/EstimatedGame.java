@@ -4,9 +4,11 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class EstimatedGame {
 
+  private static Logger logger = Logger.getLogger(EstimatedGame.class.getName());
   private static int FIRST_PLAYER_INDEX = 0;
 
   private int numberOfPlayers;
@@ -35,6 +37,8 @@ public class EstimatedGame {
   }
 
   private void loadStrategyProfiles() {
+    logger.info("Starting profile calculations for " + numberOfPlayers + " players with "
+        + strategySubset.length + " strategies each.");
     loadStrategyProfiles(FIRST_PLAYER_INDEX, new double[numberOfPlayers], this);
   }
 
