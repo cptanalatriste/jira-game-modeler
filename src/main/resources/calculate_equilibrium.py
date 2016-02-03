@@ -2,7 +2,7 @@
 """
 Created on Sun Jan 31 22:49:35 2016
 
-@author: cgavi
+@author: Carlos G. Gavidia
 """
 
 import gambit
@@ -87,10 +87,30 @@ def compute_nash_equilibrium(game, solver):
     print 'Computing Nash Equilibrium using: ', type(solver) 
 
     result = solver.solve(game)
-    print 'Equilibria found: ', len(result)
+    equilibria_found = len(result)
+    print 'Equilibria found: ', equilibria_found
     
+    equilibrium_string = ""
+
     for equilibrium in result:
-        print 'equilibrium ', type(equilibrium), equilibrium
+        equilibrium_profile = equilibrium._profile        
+          
+        for player_index in range(player_number):
+            player = game.players[player_index]
+            strategy = equilibrium_profile.__getitem__(player)
+            payoff = float(equilibrium_profile.payoff(player))
+            
+            equilibrium_string += "Player " + str(player) + ": "   
+            equilibrium_string += "Strategy " + str(strategy) + " "
+            equilibrium_string += " Payoff " + "{0:.3}".format(payoff) + "\t"
+        equilibrium_string += "\n"
+        
+    print equilibrium_string
+    
+    equilibria_file = open(file_directory + game_name + str(equilibria_found) + ".txt", "w")
+    equilibria_file.write(equilibrium_string)
+    equilibria_file.close()
+        
     return result
 
 def write_to_file(output_file, game):
@@ -99,14 +119,17 @@ def write_to_file(output_file, game):
     game_as_file.write(game.write(format='native'))
     game_as_file.close()
     
+def read_game_from_file(game_file):
+    print 'Reading game in ', output_file
+    return gambit.read_game(game_file)
 
-strategy_profiles, payoffs = load_dataset()
-game = build_strategic_game(strategy_profiles, payoffs)
+#strategy_profiles, payoffs = load_dataset()
+#game = build_strategic_game(strategy_profiles, payoffs)
+game = read_game_from_file(file_directory + output_file)
 
 list_player_strategies(game, 0)
 #list_pure_strategy_profiles(game)
-
-write_to_file(file_directory + output_file, game)
+#write_to_file(file_directory + output_file, game)
 
 solver = ExternalEnumPureSolver()
 result =compute_nash_equilibrium(game, solver)
