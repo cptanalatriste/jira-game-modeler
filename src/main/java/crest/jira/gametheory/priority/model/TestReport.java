@@ -2,20 +2,17 @@ package crest.jira.gametheory.priority.model;
 
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.retriever.model.User;
+import crest.jira.data.retriever.model.Version;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.Predicate;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 public class TestReport {
 
-  private long issuesReported = 0;
-  private long possibleInflations = 0;
-  private long severeIssuesFound = 0;
-  private long nonSevereIssuesReported = 0;
-  private long nonSevereIssuesFound = 0;
-  private Double inflationRatio = 0.0;
+  private static Logger logger = Logger.getLogger(TestReport.class.getName());
 
   public static Predicate<ExtendedIssue> INFLATED = new Predicate<ExtendedIssue>() {
     @Override
@@ -46,6 +43,17 @@ public class TestReport {
     }
   };
 
+  private long issuesReported = 0;
+  private long inflatedReports = 0;
+  private long severeIssuesFound = 0;
+  private long nonSevereIssuesReported = 0;
+  private long severeIssuesReported = 0;
+  private long nonSevereIssuesFound = 0;
+  private Double inflationRatio = 0.0;
+  private Double severeRationInReport = 0.0;
+  private Double nonSevereRationInReport = 0.0;
+  private Version version;
+
   public TestReport() {
   }
 
@@ -56,16 +64,31 @@ public class TestReport {
    *          User, corresponding to a Tester.
    * @param issuesByUser
    *          Issues reported previous to a release.
+   * @param version
+   *          Related release.
    */
-  public TestReport(User user, List<ExtendedIssue> issuesByUser) {
+  public TestReport(User user, List<ExtendedIssue> issuesByUser, Version version) {
+    this.version = version;
     this.issuesReported = issuesByUser.size();
+
+    if (this.issuesReported > TestingEffortPerRelease.MINIMUM_INVOLVEMENT) {
+      logger.fine("User " + user.getName() + "is contributing release " + version.getName()
+          + " with " + this.issuesReported + " reports.");
+    }
+
     this.severeIssuesFound = IterableUtils.countMatches(issuesByUser, SEVERE_FOUND);
     this.nonSevereIssuesFound = IterableUtils.countMatches(issuesByUser, NON_SEVERE_FOUND);
     this.nonSevereIssuesReported = IterableUtils.countMatches(issuesByUser, NON_SEVERE_REPORTED);
-    this.possibleInflations = IterableUtils.countMatches(issuesByUser, INFLATED);
+    this.inflatedReports = IterableUtils.countMatches(issuesByUser, INFLATED);
+    this.severeIssuesReported = this.inflatedReports + this.severeIssuesFound;
 
     if (nonSevereIssuesFound != 0) {
-      this.inflationRatio = possibleInflations / (double) nonSevereIssuesFound;
+      this.inflationRatio = inflatedReports / (double) nonSevereIssuesFound;
+    }
+
+    if (this.issuesReported > 0) {
+      this.severeRationInReport = this.severeIssuesReported / (double) this.issuesReported;
+      this.nonSevereRationInReport = this.nonSevereIssuesReported / (double) this.issuesReported;
     }
   }
 
@@ -122,11 +145,11 @@ public class TestReport {
   }
 
   public long getInflatedReports() {
-    return possibleInflations;
+    return inflatedReports;
   }
 
   public void setInflatedReports(long possibleInflations) {
-    this.possibleInflations = possibleInflations;
+    this.inflatedReports = possibleInflations;
   }
 
   public void setSevereIssuesFound(long severeIssuesFound) {
@@ -135,6 +158,22 @@ public class TestReport {
 
   public Double getInflationRatio() {
     return this.inflationRatio;
+  }
+
+  public long getSevereIssuesReported() {
+    return severeIssuesReported;
+  }
+
+  public Double getSevereRationInReport() {
+    return severeRationInReport;
+  }
+
+  public Double getNonSevereRationInReport() {
+    return nonSevereRationInReport;
+  }
+
+  public Version getVersion() {
+    return version;
   }
 
 }

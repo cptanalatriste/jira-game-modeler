@@ -10,7 +10,7 @@ from sklearn import metrics
 from pandas import DataFrame
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1454411474055.csv'
+file_name = 'Tester_Behaviour_Board_2_1454688181389.csv'
 
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
@@ -79,37 +79,52 @@ def measure_performance(x_test, y_test, regressor):
                                 
 def plot_external_event(data_frame, event_column, ax):
     values = data_frame[event_column]
-    #values.hist(bins=50, alpha=0.3, normed=True, ax=ax)
-    #values.plot(kind='kde', style='k--', ax=ax, title=event_column)
+    values.hist(bins=50, alpha=0.3, normed=True, ax=ax)
+    values.plot(kind='kde', style='k--', ax=ax, title=event_column)
     
-    values.hist(bins=50, alpha=0.3,ax=ax)
-
+    #values.hist(bins=50, alpha=0.3,ax=ax)
+    
+def plot_strategy(data_frame, x_column, y_column, ax):
+    data_frame.plot(kind='line', x=x_column, y=y_column)
     
 def load_release_dataset(data_frame):
     release_values = data_frame['Release'].unique()
     developer_productivity_values = []
     dev_productivity_ratio_values = []
+    avg_inflation_ratio = []
+    var_inflation_ratio = []
+    med_inflation_ratio = []
 
     
     for release in release_values:
         release_data = data_frame[data_frame['Release'].isin([release])]
         developer_productivity_values.append(release_data['Developer Productivity'].iloc[0])
         dev_productivity_ratio_values.append(release_data['Developer Productivity Ratio'].iloc[0])
-        
-    return DataFrame({'Release': release_values,
+        avg_inflation_ratio.append(release_data['Inflation Ratio (mean)'].iloc[0])
+        med_inflation_ratio.append(release_data['Inflation Ratio (med)'].iloc[0])
+        var_inflation_ratio.append(release_data['Inflation Ration (var)'].iloc[0])
+                
+    return DataFrame({'Order': range(len(release_values)),
+                      'Release': release_values,
                       'Developer Productivity': developer_productivity_values,
-                      'Developer Productivity Ratio': dev_productivity_ratio_values})
+                      'Developer Productivity Ratio': dev_productivity_ratio_values,
+                      'Inflation Ratio (mean)': avg_inflation_ratio,
+                      'Inflation Ratio (med)': med_inflation_ratio,
+                      'Inflation Ration (var)': var_inflation_ratio})
 
 
 data_frame = load_game_dataset()
 release_data_frame = load_release_dataset(data_frame)
 
 #Plotting external event data
-fig, axes = plt.subplots(4, 1, figsize=(15, 12))
+fig, axes = plt.subplots(7, 1, figsize=(15, 12))
 plot_external_event(data_frame, strategy_column, axes[0])
 plot_external_event(data_frame, 'Severe Issues', axes[1])
 plot_external_event(data_frame, 'Non-Severe Issues Found', axes[2])
 plot_external_event(release_data_frame, 'Developer Productivity Ratio', axes[3])
+plot_strategy(release_data_frame, 'Order', 'Inflation Ratio (mean)', axes[4])
+plot_strategy(release_data_frame, 'Order', 'Inflation Ratio (med)', axes[5])
+plot_strategy(release_data_frame, 'Order', 'Inflation Ration (var)', axes[6])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)

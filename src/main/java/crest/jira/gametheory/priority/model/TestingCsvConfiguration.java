@@ -32,5 +32,12 @@ public class TestingCsvConfiguration {
   public static final String STRATEGY_INDEX = "Strategy Index for Player ";
   public static final String PAYOFF_VALUE = "Payoff Value for Player ";
   public static final String STRATEGY_VALUE = "Strategy Value for Player ";
+  public static final String AVG_INFLATION_RATIO = "Inflation Ratio (mean)";
+  public static final String MED_INFLATION_RATIO = "Inflation Ratio (med)";
+  public static final String VAR_INFLATION_RATIO = "Inflation Ration (var)";
+  public static final String SEVERE_ISSUES_REPORTED = "Severe Issues Reported";
+  public static final String SEVERE_RATIO_REPORTED = "Severe Ratio Reported";
+  public static final String NON_SEVERE_RATIO_REPORTED = "Non Severe Ratio Reported";
+  public static final String TESTER_PARTICIPATION = "Tester Participation";
 
 }

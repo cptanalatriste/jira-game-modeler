@@ -24,7 +24,7 @@ public class GenerateGameModel {
   private static Logger logger = Logger.getLogger(GenerateGameModel.class.getName());
 
   private static final String CSV_FILE = GenerateConsolidatedCsvFiles.FOLDER_NAME
-      + "Tester_Behaviour_Board_2_1454406105631.csv";
+      + "Tester_Behaviour_Board_2_1454688181389.csv";
 
   private static final int MAX_STRATEGY_VALUE = 1;
   private static final int STRATEGY_SUBSET_SIZE = 3;
@@ -62,12 +62,12 @@ public class GenerateGameModel {
     EstimatedGame estimatedGame = new EstimatedGame(STRATEGY_SUBSET_SIZE, MAX_STRATEGY_VALUE,
         NUMBER_OF_PLAYERS);
 
-    logger.info("Profiles available" + estimatedGame.getStrategyProfiles().size());
+    logger.info("Profiles available " + estimatedGame.getStrategyProfiles().size());
 
     for (ReleaseTestStrategyProfile strategyProfile : estimatedGame.getStrategyProfiles()) {
       strategyProfile.calculateAveragePayoffs(SAMPLES_PER_PROFILE, severeFoundDistribution,
           nonSevereFoundDistribution, devProductivityRatioDistribution);
-      logger.info(strategyProfile.toString());
+      logger.fine(strategyProfile.toString());
     }
 
     CsvUtils.generateCsvFile(GenerateConsolidatedCsvFiles.FOLDER_NAME, "Estimated_Game",

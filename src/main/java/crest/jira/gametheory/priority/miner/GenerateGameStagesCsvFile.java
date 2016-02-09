@@ -7,14 +7,15 @@ import crest.jira.data.miner.config.ConfigurationProvider;
 import crest.jira.data.miner.csv.BaseCsvGenerator;
 import crest.jira.data.miner.db.JiraIssueListDao;
 import crest.jira.data.miner.report.model.ExtendedIssue;
+import crest.jira.data.miner.report.model.ExtendedUser;
 import crest.jira.data.miner.report.model.ReleaseDateComparator;
-import crest.jira.data.retriever.model.User;
 import crest.jira.data.retriever.model.Version;
 import crest.jira.gametheory.priority.model.TesterBehaviour;
 import crest.jira.gametheory.priority.model.TestingEffortPerRelease;
 
 import org.apache.commons.collections4.MultiValuedMap;
 
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,18 +43,18 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
    * 
    * @param args
    *          Not used at all.
-   * @throws SQLException
-   *           In case of DB problems.
-   * @throws IOException
-   *           Problems might arise.
    */
-  public static void main(String[] args) throws SQLException, IOException {
-    ConfigurationProvider configProvider = new ConfigurationProvider();
-    ConnectionSource connectionSource = configProvider.getConnectionSource();
+  public static void main(String[] args) {
+    try {
+      ConfigurationProvider configProvider = new ConfigurationProvider();
+      ConnectionSource connectionSource = configProvider.getConnectionSource();
 
-    GenerateGameStagesCsvFile generator = new GenerateGameStagesCsvFile();
-
-    generator.processBoard(connectionSource, BOARD_ID);
+      GenerateGameStagesCsvFile generator = new GenerateGameStagesCsvFile();
+      generator.processBoard(connectionSource, BOARD_ID);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    Toolkit.getDefaultToolkit().beep();
   }
 
   private void processBoard(ConnectionSource connectionSource, String boardId)
@@ -62,18 +63,18 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
     issueListDao.loadBoardIssues(boardId, ONLY_BUGS);
 
     MultiValuedMap<Version, ExtendedIssue> issuesInReleases = issueListDao.organizeInReleases();
-    Set<User> reportersPerBoard = issueListDao.getReporterCatalogPerBoard(boardId);
+    Set<ExtendedUser> reportersPerBoard = issueListDao.getReporterCatalogPerBoard(boardId);
     logger.info("reportersPerBoard.size()" + reportersPerBoard.size());
 
     List<TesterBehaviour> testerPlays = getStageGames(issuesInReleases, reportersPerBoard);
-
     logger.info("testerPlays.size()" + testerPlays.size());
-    // TODO(cgavidia): Include the inflatio ratio on the CSV file.
+
     generateCsvFile(TESTER_BEHAVIOUR, testerPlays);
   }
 
   private static List<TesterBehaviour> getStageGames(
-      MultiValuedMap<Version, ExtendedIssue> issuesInReleases, Set<User> reportersPerBoard) {
+      MultiValuedMap<Version, ExtendedIssue> issuesInReleases,
+      Set<ExtendedUser> reportersPerBoard) {
 
     List<TesterBehaviour> testerBehaviours = new ArrayList<TesterBehaviour>();
     List<Version> releases = new ArrayList<>(issuesInReleases.keySet());
@@ -84,6 +85,7 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
       TestingEffortPerRelease stageGame = new TestingEffortPerRelease(release, reportersPerBoard,
           issuesPerRelease);
       testerBehaviours.addAll(stageGame.getTesterBehaviours());
+      stageGame.calculateInflationRatioMetrics();
     }
 
     return testerBehaviours;

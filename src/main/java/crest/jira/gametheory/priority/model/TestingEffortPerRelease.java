@@ -1,11 +1,13 @@
 package crest.jira.gametheory.priority.model;
 
 import crest.jira.data.miner.report.model.ExtendedIssue;
-import crest.jira.data.retriever.model.User;
+import crest.jira.data.miner.report.model.ExtendedUser;
 import crest.jira.data.retriever.model.Version;
 
+import org.apache.commons.collections4.Closure;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.Predicate;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ public class TestingEffortPerRelease {
 
   private static Logger logger = Logger.getLogger(TestingEffortPerRelease.class.getName());
   protected static final Integer NEXT_RELEASE = 0;
+  public static final int MINIMUM_INVOLVEMENT = 8;
 
   private Long developerProductivity;
   private Long testerProductivity;
@@ -23,6 +26,10 @@ public class TestingEffortPerRelease {
   private Long releaseInflation;
   private Long releaseNonInflatedSeverity;
   private long releaseReportedNonSeverity;
+  private double averageForInflationRatio;
+  private double medianForInflationRatio;
+  private double varianceForInflationRatio;
+
   private Version release;
   private List<TesterBehaviour> testingResults = null;
 
@@ -44,50 +51,96 @@ public class TestingEffortPerRelease {
    *          Release.
    * @param reportersPerBoard
    *          Reporters for the current board.
-   * @param issuesPerRelease
+   * @param totalIssuesPerRelease
    *          Issues reported prior to the release.
    */
-  public TestingEffortPerRelease(Version release, Set<User> reportersPerBoard,
-      List<ExtendedIssue> issuesPerRelease) {
+  public TestingEffortPerRelease(Version release, Set<ExtendedUser> reportersPerBoard,
+      List<ExtendedIssue> totalIssuesPerRelease) {
+
     this.release = release;
     this.testingResults = new ArrayList<>();
-    this.developerProductivity = IterableUtils.countMatches(issuesPerRelease, FIXED_NEXT_RELEASE);
-    this.testerProductivity = (long) issuesPerRelease.size();
-    this.developerProductivityRatio = this.developerProductivity
-        / ((double) this.testerProductivity);
-    this.releaseInflation = IterableUtils.countMatches(issuesPerRelease, TestReport.INFLATED);
-    this.releaseNonInflatedSeverity = IterableUtils.countMatches(issuesPerRelease,
-        TestReport.SEVERE_FOUND);
-    this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesPerRelease,
-        TestReport.NON_SEVERE_REPORTED);
+    List<ExtendedIssue> filteredIssuesPerRelease = new ArrayList<>();
 
-    for (final User user : reportersPerBoard) {
-      Predicate<ExtendedIssue> equalsPredicate = getEqualsPredicate(user);
-      List<List<ExtendedIssue>> issuesByUser = IterableUtils.partition(issuesPerRelease,
+    for (final ExtendedUser extendedUser : reportersPerBoard) {
+      Predicate<ExtendedIssue> equalsPredicate = getEqualsPredicate(extendedUser);
+      List<List<ExtendedIssue>> issuesByUser = IterableUtils.partition(totalIssuesPerRelease,
           equalsPredicate);
 
-      TesterBehaviour testerPlay = new TesterBehaviour(user, this, issuesByUser.get(0));
+      List<ExtendedIssue> issueListByUser = issuesByUser.get(0);
+      TesterBehaviour testerPlay = new TesterBehaviour(extendedUser, this, issueListByUser);
 
-      if (testerPlay.getTestReport().getIssuesReported() > 0) {
+      // We're only interested in the issues reported by testers involved in the
+      // project.
+      if (testerPlay.getTestReport().getIssuesReported() > MINIMUM_INVOLVEMENT) {
         this.testingResults.add(testerPlay);
+        extendedUser.reportParticipation();
+
+        filteredIssuesPerRelease.addAll(issueListByUser);
       }
     }
+
+    calculateReleaseMetrics(release, filteredIssuesPerRelease);
   }
 
-  private Predicate<ExtendedIssue> getEqualsPredicate(final User user) {
+  private void calculateReleaseMetrics(Version release, List<ExtendedIssue> issuesForAnalysis) {
+
+    this.developerProductivity = IterableUtils.countMatches(issuesForAnalysis, FIXED_NEXT_RELEASE);
+    this.testerProductivity = (long) issuesForAnalysis.size();
+    this.developerProductivityRatio = this.developerProductivity
+        / ((double) this.testerProductivity);
+    this.releaseInflation = IterableUtils.countMatches(issuesForAnalysis, TestReport.INFLATED);
+    this.releaseNonInflatedSeverity = IterableUtils.countMatches(issuesForAnalysis,
+        TestReport.SEVERE_FOUND);
+    this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesForAnalysis,
+        TestReport.NON_SEVERE_REPORTED);
+
+    IterableUtils.forEach(this.testingResults, new Closure<TesterBehaviour>() {
+
+      @Override
+      public void execute(TesterBehaviour testerBehaviour) {
+        testerBehaviour.calculateRegressionFields();
+      }
+    });
+  }
+
+  private Predicate<ExtendedIssue> getEqualsPredicate(final ExtendedUser extendedUser) {
     return new Predicate<ExtendedIssue>() {
       @Override
       public boolean evaluate(ExtendedIssue issueInCollections) {
-        return user.equals(issueInCollections.getIssue().getReporter());
+        return extendedUser.getUser().equals(issueInCollections.getIssue().getReporter());
       }
     };
+  }
+
+  /**
+   * Calculates consolidated inflation information with respect to this release.
+   */
+  public void calculateInflationRatioMetrics() {
+    this.averageForInflationRatio = 0;
+    this.varianceForInflationRatio = 0;
+
+    DescriptiveStatistics inflationRatioStats = new DescriptiveStatistics();
+
+    for (TesterBehaviour testerBehaviour : this.testingResults) {
+      testerBehaviour.calculateInflatioRatio();
+      inflationRatioStats.addValue(testerBehaviour.getInflationRatio());
+    }
+
+    this.averageForInflationRatio = inflationRatioStats.getMean();
+    this.varianceForInflationRatio = inflationRatioStats.getVariance();
+    this.medianForInflationRatio = inflationRatioStats.getPercentile(50);
+
+    logger.fine("this.testingResults.size() " + this.testingResults.size());
+    logger.fine("this.averageForInflationRatio " + this.averageForInflationRatio);
+    logger.fine("this.varianceForInflationRatio " + this.varianceForInflationRatio);
+
   }
 
   /**
    * Based on the Tester Behaviors stored, this methods calculates the inflation
    * of a release, the real severity, and the non-severity reported.
    */
-  public void calculateReleaseMetrics() {
+  public void updateReleaseMetrics() {
 
     this.releaseInflation = 0L;
     this.releaseNonInflatedSeverity = 0L;
@@ -138,6 +191,18 @@ public class TestingEffortPerRelease {
 
   public Long getTestTeamProductivity() {
     return testerProductivity;
+  }
+
+  public double getAverageForInflationRatio() {
+    return averageForInflationRatio;
+  }
+
+  public double getVarianceForInflationRatio() {
+    return varianceForInflationRatio;
+  }
+
+  public double getMedianForInflationRatio() {
+    return medianForInflationRatio;
   }
 
   public List<TesterBehaviour> getTesterBehaviours() {

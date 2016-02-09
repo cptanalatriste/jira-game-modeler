@@ -14,7 +14,7 @@ from gambit.nash import ExternalEnumMixedSolver
 from gambit.nash import ExternalLogitSolver
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-game_name = 'Estimated_Game_1454422784075'
+game_name = 'Estimated_Game_1454689313717'
 file_name =  game_name + '.csv'
 output_file = game_name + '.nfg'
 
@@ -123,13 +123,14 @@ def read_game_from_file(game_file):
     print 'Reading game in ', output_file
     return gambit.read_game(game_file)
 
-#strategy_profiles, payoffs = load_dataset()
-#game = build_strategic_game(strategy_profiles, payoffs)
-game = read_game_from_file(file_directory + output_file)
+strategy_profiles, payoffs = load_dataset()
+game = build_strategic_game(strategy_profiles, payoffs)
+write_to_file(file_directory + output_file, game)
+
+#game = read_game_from_file(file_directory + output_file)
 
 list_player_strategies(game, 0)
 #list_pure_strategy_profiles(game)
-#write_to_file(file_directory + output_file, game)
 
 solver = ExternalEnumPureSolver()
 result =compute_nash_equilibrium(game, solver)

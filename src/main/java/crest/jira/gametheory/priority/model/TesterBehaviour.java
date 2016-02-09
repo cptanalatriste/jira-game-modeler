@@ -2,7 +2,7 @@ package crest.jira.gametheory.priority.model;
 
 import crest.jira.data.miner.csv.CsvExportSupport;
 import crest.jira.data.miner.report.model.ExtendedIssue;
-import crest.jira.data.retriever.model.User;
+import crest.jira.data.miner.report.model.ExtendedUser;
 import crest.jira.gametheory.priority.regression.DataEntry;
 
 import org.apache.commons.collections4.IterableUtils;
@@ -20,7 +20,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   // TODO(cgavidia): Evaluate if this simple payoff needs to be modified.
   private Long nextReleaseFixes;
-  private User user;
+  private ExtendedUser extendedUser;
   private TestingEffortPerRelease testingEffort;
 
   /**
@@ -41,22 +41,24 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   /**
    * Stores the behavior of a Tester on an Specific release.
    * 
-   * @param user
+   * @param extendedUser
    *          Tester.
    * @param testingEffort
    *          Testing metrics for the release.
    * @param issuesByUser
    *          Issues reported.
    */
-  public TesterBehaviour(User user, TestingEffortPerRelease testingEffort,
+  public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerRelease testingEffort,
       List<ExtendedIssue> issuesByUser) {
-    this.user = user;
+    this.extendedUser = extendedUser;
     this.testingEffort = testingEffort;
-    this.testReport = new TestReport(user, issuesByUser);
+    this.testReport = new TestReport(extendedUser.getUser(), issuesByUser,
+        testingEffort.getRelease());
 
     this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
         TestingEffortPerRelease.FIXED_NEXT_RELEASE);
-    this.calculateRegressionFields();
+
+    // this.calculateRegressionFields();
   }
 
   /**
@@ -94,8 +96,13 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   /**
    * After all the proper values are being set, the expected number of fixes per
    * release is estimated.
+   * 
+   * @throws NullPointerException
+   *           If this method is called when the TestingEffort reference hasn't
+   *           calculated release metrics through a calculateReleaseMetrics()
+   *           call.
    */
-  public void calculateRegressionFields() {
+  public void calculateRegressionFields() throws NullPointerException {
     this.expectedSevereFixes = this.testReport.getSevereIssuesFound()
         * this.getFixProbabilityForSevere();
     this.expectedInflatedFixes = this.testReport.getInflatedReports()
@@ -114,8 +121,8 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return nextReleaseFixes;
   }
 
-  public User getUser() {
-    return user;
+  public ExtendedUser getUser() {
+    return extendedUser;
   }
 
   public TestingEffortPerRelease getRelease() {
@@ -183,21 +190,31 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return expectedFixes;
   }
 
+  // TODO(cgavidia): We need to refactor this cumbersome two-method way of doing
+  // this.
   @Override
   public List<Object> getCsvRecord() {
     List<Object> recordAsList = new ArrayList<>();
     recordAsList.add(this.testingEffort.getRelease().getName());
-    recordAsList.add(this.user.getName());
+    recordAsList.add(this.extendedUser.getUser().getName());
+    recordAsList.add(this.extendedUser.getReleaseParticipation());
 
     recordAsList.add(this.testingEffort.getDeveloperProductivity());
     recordAsList.add(this.testingEffort.getTestTeamProductivity());
     recordAsList.add(this.testingEffort.getDeveloperProductivityRatio());
     recordAsList.add(this.testingEffort.getReleaseInflation());
+    recordAsList.add(this.testingEffort.getAverageForInflationRatio());
+    recordAsList.add(this.testingEffort.getMedianForInflationRatio());
+    recordAsList.add(this.testingEffort.getVarianceForInflationRatio());
 
     recordAsList.add(this.testReport.getIssuesReported());
     recordAsList.add(this.testReport.getInflatedReports());
     recordAsList.add(this.testReport.getInflationRatio());
+    recordAsList.add(this.testReport.getSevereRationInReport());
+    recordAsList.add(this.testReport.getNonSevereRationInReport());
+
     recordAsList.add(this.testReport.getSevereIssuesFound());
+    recordAsList.add(this.testReport.getSevereIssuesReported());
     recordAsList.add(this.testReport.getNonSevereIssuesReported());
     recordAsList.add(this.testReport.getNonSevereIssuesFound());
 
@@ -221,15 +238,23 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
     headerAsList.add(TestingCsvConfiguration.RELEASE);
     headerAsList.add(TestingCsvConfiguration.TESTER);
+    headerAsList.add(TestingCsvConfiguration.TESTER_PARTICIPATION);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
     headerAsList.add(TestingCsvConfiguration.RELEASE_INFLATION);
+    headerAsList.add(TestingCsvConfiguration.AVG_INFLATION_RATIO);
+    headerAsList.add(TestingCsvConfiguration.MED_INFLATION_RATIO);
+    headerAsList.add(TestingCsvConfiguration.VAR_INFLATION_RATIO);
 
     headerAsList.add(TestingCsvConfiguration.ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.POSSIBLE_INFLATIONS);
     headerAsList.add(TestingCsvConfiguration.INFLATION_RATIO);
+    headerAsList.add(TestingCsvConfiguration.SEVERE_RATIO_REPORTED);
+    headerAsList.add(TestingCsvConfiguration.NON_SEVERE_RATIO_REPORTED);
+
     headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_FOUND);
+    headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND);
 
@@ -249,6 +274,19 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   public double getInflationRatio() {
     return inflationRatio;
+  }
+
+  /**
+   * Calculates the inflation ratio, only if non-severe issues were found.
+   * 
+   */
+  public void calculateInflatioRatio() {
+    this.inflationRatio = 0.0;
+
+    if (this.testReport.getNonSevereIssuesFound() > 0) {
+      this.inflationRatio = ((double) this.testReport.getInflatedReports())
+          / this.testReport.getNonSevereIssuesFound();
+    }
   }
 
   public void setInflationRatio(double inflationRatio) {

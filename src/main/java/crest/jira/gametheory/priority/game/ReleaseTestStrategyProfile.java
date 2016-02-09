@@ -69,8 +69,8 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
       EmpiricalDistribution nonSevereFoundDistribution,
       EmpiricalDistribution devProductivityRatioDistribution) {
 
-    logger.info("Calculating payoff for profile " + this.toString());
-    logger.info("Executing " + samplesPerProfile + " samples");
+    logger.fine("Calculating payoff for profile " + this.toString());
+    logger.fine("Executing " + samplesPerProfile + " samples");
 
 
     for (int sampleIndex = 0; sampleIndex < samplesPerProfile; sampleIndex += 1) {
@@ -90,7 +90,7 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
       }
 
       // Performing payoff calculations.
-      this.releaseTestingEffort.calculateReleaseMetrics();
+      this.releaseTestingEffort.updateReleaseMetrics();
 
       for (int playerIndex = 0; playerIndex < releaseTestingEffort.getTesterBehaviours()
           .size(); playerIndex += 1) {
