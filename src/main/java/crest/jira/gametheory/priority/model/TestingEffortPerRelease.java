@@ -18,7 +18,7 @@ public class TestingEffortPerRelease {
 
   private static Logger logger = Logger.getLogger(TestingEffortPerRelease.class.getName());
   protected static final Integer NEXT_RELEASE = 0;
-  public static final int MINIMUM_INVOLVEMENT = 8;
+  public static final int MINIMUM_INVOLVEMENT = 3;
 
   private Long developerProductivity;
   private Long testerProductivity;
@@ -29,6 +29,7 @@ public class TestingEffortPerRelease {
   private double averageForInflationRatio;
   private double medianForInflationRatio;
   private double varianceForInflationRatio;
+  private double releaseSeverityRatio = 0.0;
 
   private Version release;
   private List<TesterBehaviour> testingResults = null;
@@ -93,6 +94,11 @@ public class TestingEffortPerRelease {
         TestReport.SEVERE_FOUND);
     this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesForAnalysis,
         TestReport.NON_SEVERE_REPORTED);
+
+    if (this.testerProductivity > 0) {
+      this.releaseSeverityRatio = this.releaseNonInflatedSeverity
+          / (double) this.testerProductivity;
+    }
 
     IterableUtils.forEach(this.testingResults, new Closure<TesterBehaviour>() {
 
@@ -203,6 +209,10 @@ public class TestingEffortPerRelease {
 
   public double getMedianForInflationRatio() {
     return medianForInflationRatio;
+  }
+
+  public double getReleaseSeverityRatio() {
+    return releaseSeverityRatio;
   }
 
   public List<TesterBehaviour> getTesterBehaviours() {

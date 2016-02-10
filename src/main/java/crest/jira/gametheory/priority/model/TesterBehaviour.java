@@ -203,6 +203,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     recordAsList.add(this.testingEffort.getTestTeamProductivity());
     recordAsList.add(this.testingEffort.getDeveloperProductivityRatio());
     recordAsList.add(this.testingEffort.getReleaseInflation());
+    recordAsList.add(this.testingEffort.getReleaseSeverityRatio());
     recordAsList.add(this.testingEffort.getAverageForInflationRatio());
     recordAsList.add(this.testingEffort.getMedianForInflationRatio());
     recordAsList.add(this.testingEffort.getVarianceForInflationRatio());
@@ -243,6 +244,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
     headerAsList.add(TestingCsvConfiguration.RELEASE_INFLATION);
+    headerAsList.add(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO);
     headerAsList.add(TestingCsvConfiguration.AVG_INFLATION_RATIO);
     headerAsList.add(TestingCsvConfiguration.MED_INFLATION_RATIO);
     headerAsList.add(TestingCsvConfiguration.VAR_INFLATION_RATIO);

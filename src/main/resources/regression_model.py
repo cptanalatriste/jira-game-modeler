@@ -10,8 +10,10 @@ from sklearn import metrics
 from pandas import DataFrame
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1454688181389.csv'
+file_name = 'Tester_Behaviour_Board_2_1455034079173.csv'
 
+testers = ['jessicawang', 'likithas', 'minchen07', 'bhaisaab', 'chandanp', 'jayapal',
+           'rayeesn', 'sailaja']
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
 target_column = 'Next Release Fixes'
@@ -77,16 +79,23 @@ def measure_performance(x_test, y_test, regressor):
     print 'Coefficient of determination: {0:.3f}'.format(
         metrics.r2_score(y_test, y_pred)), '\n'    
                                 
-def plot_external_event(data_frame, event_column, ax):
+def plot_external_event(data_frame, event_column, ax=None):
     values = data_frame[event_column]
     values.hist(bins=50, alpha=0.3, normed=True, ax=ax)
     values.plot(kind='kde', style='k--', ax=ax, title=event_column)
     
     #values.hist(bins=50, alpha=0.3,ax=ax)
     
-def plot_strategy(data_frame, x_column, y_column, ax):
-    data_frame.plot(kind='line', x=x_column, y=y_column)
-    
+def plot_strategy(data_frame, x_column=None, y_column=None, ax=None, title=None):
+    print title, ": Plotting ", len(data_frame.index), " data points "
+    data_frame.plot(kind='line', x=x_column, y=y_column, ax=ax, title=title)
+
+def plot_tester_strategy(tester_list, data_frame, metric):
+    for tester_name in tester_list:
+        tester_data_frame = load_tester_reports(data_frame, tester_name)
+        plot_strategy(data_frame=tester_data_frame, x_column='Release',
+              y_column=metric, title= metric + " - "+ tester_name)
+  
 def load_release_dataset(data_frame):
     release_values = data_frame['Release'].unique()
     developer_productivity_values = []
@@ -94,7 +103,7 @@ def load_release_dataset(data_frame):
     avg_inflation_ratio = []
     var_inflation_ratio = []
     med_inflation_ratio = []
-
+    severity_ratio = []
     
     for release in release_values:
         release_data = data_frame[data_frame['Release'].isin([release])]
@@ -103,28 +112,38 @@ def load_release_dataset(data_frame):
         avg_inflation_ratio.append(release_data['Inflation Ratio (mean)'].iloc[0])
         med_inflation_ratio.append(release_data['Inflation Ratio (med)'].iloc[0])
         var_inflation_ratio.append(release_data['Inflation Ration (var)'].iloc[0])
-                
+        severity_ratio.append(release_data['Release Severity Ratio'].iloc[0])        
+        
     return DataFrame({'Order': range(len(release_values)),
                       'Release': release_values,
                       'Developer Productivity': developer_productivity_values,
                       'Developer Productivity Ratio': dev_productivity_ratio_values,
                       'Inflation Ratio (mean)': avg_inflation_ratio,
                       'Inflation Ratio (med)': med_inflation_ratio,
-                      'Inflation Ration (var)': var_inflation_ratio})
+                      'Inflation Ration (var)': var_inflation_ratio,
+                      'Release Severity Ratio': severity_ratio})
 
+def load_tester_reports(data_frame, tester_name):
+    tester_data_frame = data_frame[data_frame['Tester'].isin([tester_name])]
+    tester_data_frame.reindex()
+    return tester_data_frame
 
 data_frame = load_game_dataset()
 release_data_frame = load_release_dataset(data_frame)
 
 #Plotting external event data
-fig, axes = plt.subplots(7, 1, figsize=(15, 12))
+fig, axes = plt.subplots(8, 1, figsize=(10, 30))
 plot_external_event(data_frame, strategy_column, axes[0])
 plot_external_event(data_frame, 'Severe Issues', axes[1])
 plot_external_event(data_frame, 'Non-Severe Issues Found', axes[2])
 plot_external_event(release_data_frame, 'Developer Productivity Ratio', axes[3])
-plot_strategy(release_data_frame, 'Order', 'Inflation Ratio (mean)', axes[4])
-plot_strategy(release_data_frame, 'Order', 'Inflation Ratio (med)', axes[5])
-plot_strategy(release_data_frame, 'Order', 'Inflation Ration (var)', axes[6])
+plot_strategy(release_data_frame, 'Release', 'Inflation Ratio (mean)', axes[4])
+plot_strategy(release_data_frame, 'Release', 'Inflation Ratio (med)', axes[5])
+plot_strategy(release_data_frame, 'Release', 'Inflation Ration (var)', axes[6])
+plot_strategy(release_data_frame, 'Release', 'Release Severity Ratio', axes[7])
+
+plot_tester_strategy(testers, data_frame, 'Severe Ratio Reported')
+plot_tester_strategy(testers, data_frame, 'Inflation Ratio')
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)
