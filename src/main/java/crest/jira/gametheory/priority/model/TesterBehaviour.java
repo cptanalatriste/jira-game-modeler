@@ -27,6 +27,8 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
    * Percentage of non-severe issues that will be inflated.
    */
   private double inflationRatio;
+  private double successRatio;
+
   private double expectedSevereFixes;
   private double expectedInflatedFixes;
   private double expectedNonSevereFixes;
@@ -57,6 +59,11 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
     this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
         TestingEffortPerRelease.FIXED_NEXT_RELEASE);
+
+    this.successRatio = 0.0;
+    if (this.testReport.getIssuesReported() != 0) {
+      this.successRatio = this.nextReleaseFixes / (double) this.testReport.getIssuesReported();
+    }
 
     // this.calculateRegressionFields();
   }
@@ -224,6 +231,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     recordAsList.add(this.getExternalSeverity());
 
     recordAsList.add(this.getNextReleaseFixes());
+    recordAsList.add(this.getSuccessRatio());
     recordAsList.add(this.getFixProbabilityForSevere());
     recordAsList.add(this.getFixProbabilityForNonSevere());
     recordAsList.add(this.getExpectedSevereFixes());
@@ -267,6 +275,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.EXTERNAL_SEVERITY);
 
     headerAsList.add(TestingCsvConfiguration.NEXT_RELEASE_FIXES);
+    headerAsList.add(TestingCsvConfiguration.SUCCESS_RATIO);
     headerAsList.add(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY);
     headerAsList.add(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES);
@@ -300,6 +309,10 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   public void setInflationRatio(double inflationRatio) {
     this.inflationRatio = inflationRatio;
+  }
+
+  public double getSuccessRatio() {
+    return successRatio;
   }
 
   @Override

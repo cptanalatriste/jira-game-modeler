@@ -10,7 +10,7 @@ from sklearn import metrics
 from pandas import DataFrame
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1455034079173.csv'
+file_name = 'Tester_Behaviour_Board_2_1455489474821.csv'
 
 testers = ['jessicawang', 'likithas', 'minchen07', 'bhaisaab', 'chandanp', 'jayapal',
            'rayeesn', 'sailaja']
@@ -93,7 +93,7 @@ def plot_strategy(data_frame, x_column=None, y_column=None, ax=None, title=None)
 def plot_tester_strategy(tester_list, data_frame, metrics):
     for tester_name in tester_list:
         tester_data_frame = load_tester_reports(data_frame, tester_name)
-        fig, axes = plt.subplots(1, len(metrics), figsize=(13, 5))
+        fig, axes = plt.subplots(1, len(metrics), figsize=(18, 5))
         
         for index, metric in enumerate(metrics):
             plot_strategy(ax=axes[index], data_frame=tester_data_frame, x_column='Release',
@@ -146,7 +146,8 @@ plot_strategy(release_data_frame, 'Release', 'Inflation Ratio (med)', axes[5])
 plot_strategy(release_data_frame, 'Release', 'Inflation Ration (var)', axes[6])
 plot_strategy(release_data_frame, 'Release', 'Release Severity Ratio', axes[7])
 
-plot_tester_strategy(testers, data_frame, ['Severe Ratio Reported', 'Inflation Ratio'])
+plot_tester_strategy(testers, data_frame, ['Severe Ratio Reported', 
+                                           'Inflation Ratio', 'Success Ratio'])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)
