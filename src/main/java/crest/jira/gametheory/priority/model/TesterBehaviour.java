@@ -198,6 +198,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     recordAsList.add(this.testingEffort.getRelease().getName());
     recordAsList.add(this.extendedUser.getUser().getName());
     recordAsList.add(this.extendedUser.getReleaseParticipation());
+    recordAsList.add(this.extendedUser.getRegressionForInflation().getSlope());
 
     recordAsList.add(this.testingEffort.getDeveloperProductivity());
     recordAsList.add(this.testingEffort.getTestTeamProductivity());
@@ -240,6 +241,8 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.RELEASE);
     headerAsList.add(TestingCsvConfiguration.TESTER);
     headerAsList.add(TestingCsvConfiguration.TESTER_PARTICIPATION);
+    headerAsList.add(TestingCsvConfiguration.TESTER_INFLATION_SLOPE);
+
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
@@ -279,7 +282,8 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   }
 
   /**
-   * Calculates the inflation ratio, only if non-severe issues were found.
+   * Calculates the inflation ratio, only if non-severe issues were found. Also,
+   * stores this value in the corresponding User.
    * 
    */
   public void calculateInflatioRatio() {
@@ -289,6 +293,9 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
       this.inflationRatio = ((double) this.testReport.getInflatedReports())
           / this.testReport.getNonSevereIssuesFound();
     }
+
+    this.extendedUser.getInflationRatios().put(this.testingEffort.getRelease(),
+        this.inflationRatio);
   }
 
   public void setInflationRatio(double inflationRatio) {

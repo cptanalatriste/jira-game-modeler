@@ -90,12 +90,16 @@ def plot_strategy(data_frame, x_column=None, y_column=None, ax=None, title=None)
     print title, ": Plotting ", len(data_frame.index), " data points "
     data_frame.plot(kind='line', x=x_column, y=y_column, ax=ax, title=title)
 
-def plot_tester_strategy(tester_list, data_frame, metric):
+def plot_tester_strategy(tester_list, data_frame, metrics):
     for tester_name in tester_list:
         tester_data_frame = load_tester_reports(data_frame, tester_name)
-        plot_strategy(data_frame=tester_data_frame, x_column='Release',
-              y_column=metric, title= metric + " - "+ tester_name)
-  
+        fig, axes = plt.subplots(1, len(metrics), figsize=(13, 5))
+        
+        for index, metric in enumerate(metrics):
+            plot_strategy(ax=axes[index], data_frame=tester_data_frame, x_column='Release',
+              y_column=metric, title= metric + " - "+ tester_name)    
+        
+ 
 def load_release_dataset(data_frame):
     release_values = data_frame['Release'].unique()
     developer_productivity_values = []
@@ -142,8 +146,7 @@ plot_strategy(release_data_frame, 'Release', 'Inflation Ratio (med)', axes[5])
 plot_strategy(release_data_frame, 'Release', 'Inflation Ration (var)', axes[6])
 plot_strategy(release_data_frame, 'Release', 'Release Severity Ratio', axes[7])
 
-plot_tester_strategy(testers, data_frame, 'Severe Ratio Reported')
-plot_tester_strategy(testers, data_frame, 'Inflation Ratio')
+plot_tester_strategy(testers, data_frame, ['Severe Ratio Reported', 'Inflation Ratio'])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)

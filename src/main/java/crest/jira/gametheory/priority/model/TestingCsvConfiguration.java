@@ -40,5 +40,6 @@ public class TestingCsvConfiguration {
   public static final String NON_SEVERE_RATIO_REPORTED = "Non Severe Ratio Reported";
   public static final String TESTER_PARTICIPATION = "Tester Participation";
   public static final String RELEASE_SEVERITY_RATIO = "Release Severity Ratio";
+  public static final String TESTER_INFLATION_SLOPE = "Tester Inflation Slope";
 
 }
