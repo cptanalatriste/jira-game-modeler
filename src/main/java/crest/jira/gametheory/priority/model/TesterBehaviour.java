@@ -20,8 +20,9 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   // TODO(cgavidia): Evaluate if this simple payoff needs to be modified.
   private Long nextReleaseFixes;
+  private Long rejectedIssues;
   private ExtendedUser extendedUser;
-  private TestingEffortPerRelease testingEffort;
+  private TestingEffortPerTimeFrame testingEffort;
 
   /**
    * Percentage of non-severe issues that will be inflated.
@@ -35,7 +36,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   private double expectedFixes;
 
-  public TesterBehaviour(TestingEffortPerRelease releaseTestingEffort) {
+  public TesterBehaviour(TestingEffortPerTimeFrame releaseTestingEffort) {
     this.testReport = new TestReport();
     this.testingEffort = releaseTestingEffort;
   }
@@ -50,15 +51,17 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
    * @param issuesByUser
    *          Issues reported.
    */
-  public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerRelease testingEffort,
+  public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerTimeFrame testingEffort,
       List<ExtendedIssue> issuesByUser) {
     this.extendedUser = extendedUser;
     this.testingEffort = testingEffort;
     this.testReport = new TestReport(extendedUser.getUser(), issuesByUser,
-        testingEffort.getRelease());
+        testingEffort.getTimeFrame());
 
     this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
-        TestingEffortPerRelease.FIXED_NEXT_RELEASE);
+        TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE);
+    this.rejectedIssues = IterableUtils.countMatches(issuesByUser,
+        TestingEffortPerTimeFrame.RELEASE_REJECTIONS);
 
     this.successRatio = 0.0;
     if (this.testReport.getIssuesReported() != 0) {
@@ -124,6 +127,10 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return testReport;
   }
 
+  public Long getRejectedIssues() {
+    return rejectedIssues;
+  }
+
   public Long getNextReleaseFixes() {
     return nextReleaseFixes;
   }
@@ -132,7 +139,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return extendedUser;
   }
 
-  public TestingEffortPerRelease getRelease() {
+  public TestingEffortPerTimeFrame getRelease() {
     return testingEffort;
   }
 
@@ -202,12 +209,13 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
   @Override
   public List<Object> getCsvRecord() {
     List<Object> recordAsList = new ArrayList<>();
-    recordAsList.add(this.testingEffort.getRelease().getName());
+    recordAsList.add(this.testingEffort.getTimeFrame());
     recordAsList.add(this.extendedUser.getUser().getName());
     recordAsList.add(this.extendedUser.getReleaseParticipation());
     recordAsList.add(this.extendedUser.getRegressionForInflation().getSlope());
 
     recordAsList.add(this.testingEffort.getDeveloperProductivity());
+    recordAsList.add(this.testingEffort.getReleaseRejection());
     recordAsList.add(this.testingEffort.getTestTeamProductivity());
     recordAsList.add(this.testingEffort.getDeveloperProductivityRatio());
     recordAsList.add(this.testingEffort.getReleaseInflation());
@@ -231,6 +239,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     recordAsList.add(this.getExternalSeverity());
 
     recordAsList.add(this.getNextReleaseFixes());
+    recordAsList.add(this.getRejectedIssues());
     recordAsList.add(this.getSuccessRatio());
     recordAsList.add(this.getFixProbabilityForSevere());
     recordAsList.add(this.getFixProbabilityForNonSevere());
@@ -252,6 +261,8 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.TESTER_INFLATION_SLOPE);
 
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY);
+    headerAsList.add(TestingCsvConfiguration.RELEASE_REJECTION);
+
     headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
     headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
     headerAsList.add(TestingCsvConfiguration.RELEASE_INFLATION);
@@ -275,6 +286,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     headerAsList.add(TestingCsvConfiguration.EXTERNAL_SEVERITY);
 
     headerAsList.add(TestingCsvConfiguration.NEXT_RELEASE_FIXES);
+    headerAsList.add(TestingCsvConfiguration.REJECTED_ISSUES);
     headerAsList.add(TestingCsvConfiguration.SUCCESS_RATIO);
     headerAsList.add(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY);
     headerAsList.add(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY);
@@ -303,7 +315,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
           / this.testReport.getNonSevereIssuesFound();
     }
 
-    this.extendedUser.getInflationRatios().put(this.testingEffort.getRelease(),
+    this.extendedUser.getInflationRatios().put(this.testingEffort.getTimeFrame(),
         this.inflationRatio);
   }
 

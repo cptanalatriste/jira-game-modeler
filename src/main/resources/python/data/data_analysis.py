@@ -10,10 +10,10 @@ from sklearn import metrics
 from pandas import DataFrame
 
 file_directory = 'C:/Users/cgavi/OneDrive/phd2/jira_data/'
-file_name = 'Tester_Behaviour_Board_2_1455489474821.csv'
+file_name = 'Tester_Behaviour_Board_2_1455581512731.csv'
 
-testers = ['jessicawang', 'likithas', 'minchen07', 'bhaisaab', 'chandanp', 'jayapal',
-           'rayeesn', 'sailaja']
+testers = ['rayeesn', 'sangeethah', 'chandanp', 'jessicawang', 'sailaja',  
+              'parth','minchen07', 'alena1108']
 data_columns = ['Expected Inflated Fixes', 'Expected Severe Fixes', 
                 'Expected Non Severe Fixes']
 target_column = 'Next Release Fixes'
@@ -93,10 +93,11 @@ def plot_strategy(data_frame, x_column=None, y_column=None, ax=None, title=None)
 def plot_tester_strategy(tester_list, data_frame, metrics):
     for tester_name in tester_list:
         tester_data_frame = load_tester_reports(data_frame, tester_name)
-        fig, axes = plt.subplots(1, len(metrics), figsize=(18, 5))
+        width_height = (15, 5)
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=width_height)
         
         for index, metric in enumerate(metrics):
-            plot_strategy(ax=axes[index], data_frame=tester_data_frame, x_column='Release',
+            plot_strategy(ax=axes, data_frame=tester_data_frame, x_column='Release',
               y_column=metric, title= metric + " - "+ tester_name)    
         
  
@@ -136,7 +137,7 @@ data_frame = load_game_dataset()
 release_data_frame = load_release_dataset(data_frame)
 
 #Plotting external event data
-fig, axes = plt.subplots(8, 1, figsize=(10, 30))
+fig, axes = plt.subplots(8, 1, figsize=(15, 30))
 plot_external_event(data_frame, strategy_column, axes[0])
 plot_external_event(data_frame, 'Severe Issues', axes[1])
 plot_external_event(data_frame, 'Non-Severe Issues Found', axes[2])
@@ -146,8 +147,7 @@ plot_strategy(release_data_frame, 'Release', 'Inflation Ratio (med)', axes[5])
 plot_strategy(release_data_frame, 'Release', 'Inflation Ration (var)', axes[6])
 plot_strategy(release_data_frame, 'Release', 'Release Severity Ratio', axes[7])
 
-plot_tester_strategy(testers, data_frame, ['Severe Ratio Reported', 
-                                           'Inflation Ratio', 'Success Ratio'])
+plot_tester_strategy(testers, data_frame, ['Inflation Ratio', 'Success Ratio'])
 
 #Creating regression
 x_train, y_train, x_test, y_test = split_dataset(data_frame, False)

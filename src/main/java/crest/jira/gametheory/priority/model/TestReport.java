@@ -2,7 +2,6 @@ package crest.jira.gametheory.priority.model;
 
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.retriever.model.User;
-import crest.jira.data.retriever.model.Version;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.Predicate;
@@ -52,7 +51,7 @@ public class TestReport {
   private Double inflationRatio = 0.0;
   private Double severeRationInReport = 0.0;
   private Double nonSevereRationInReport = 0.0;
-  private Version version;
+  private String timeFrame;
 
   public TestReport() {
   }
@@ -64,16 +63,16 @@ public class TestReport {
    *          User, corresponding to a Tester.
    * @param issuesByUser
    *          Issues reported previous to a release.
-   * @param version
+   * @param timeFrame
    *          Related release.
    */
-  public TestReport(User user, List<ExtendedIssue> issuesByUser, Version version) {
-    this.version = version;
+  public TestReport(User user, List<ExtendedIssue> issuesByUser, String timeFrame) {
+    this.timeFrame = timeFrame;
     this.issuesReported = issuesByUser.size();
 
-    if (this.issuesReported > TestingEffortPerRelease.MINIMUM_INVOLVEMENT) {
-      logger.fine("User " + user.getName() + "is contributing release " + version.getName()
-          + " with " + this.issuesReported + " reports.");
+    if (this.issuesReported > TestingEffortPerTimeFrame.MINIMUM_INVOLVEMENT) {
+      logger.fine("User " + user.getName() + "is contributing release " + timeFrame + " with "
+          + this.issuesReported + " reports.");
     }
 
     this.severeIssuesFound = IterableUtils.countMatches(issuesByUser, SEVERE_FOUND);
@@ -172,8 +171,8 @@ public class TestReport {
     return nonSevereRationInReport;
   }
 
-  public Version getVersion() {
-    return version;
+  public String getTimeFrame() {
+    return timeFrame;
   }
 
 }

@@ -36,30 +36,42 @@ class DeveloperTeam:
 
         return fix_reports
 
-class TestingStrategy:
-    pass
-
+class MaxMinTestingStrategy:
+    """ Defines a particular strategy for testing on a release """
+    def __init__(self, max_severe=5, max_non_severe = 10):
+        self.max_severe = max_severe
+        self.max_non_severe = max_non_severe
+        
+    def report(self):
+        # TODO(cgavidia) Implement proper reporting logic, based on the Tester
+        # findings and it's learning pattern
+        severe = random.randint(1, self.max_severe)
+        non_severe = random.randint(1, self.max_non_severe)
+        return (severe, non_severe)
+        
 class Tester:
     """ A Tester, that reports defect for a Software Version """
-    def __init__(self, max_severe=5, min_severe = 10):
-        self.max_severe = max_severe
-        self.min_severe = min_severe
+    def __init__(self, testing_strategy):
+        self.testing_strategy = testing_strategy
+        self.reset()
+    
+    """ Clears the testing history """
+    def reset(self):
         self.release_reports = []
+        self.fix_reports = []
 
     """ Reports a number of defects on the System """
     def report(self):
         # TODO(cgavidia) Implement proper reporting logic, based on the Tester
         # findings and it's learning pattern
-        severe = random.randint(1, self.max_severe)
-        non_severe = random.randint(1, self.min_severe)
-        report = (severe, non_severe)
-        self.record(report)
+        report = self.testing_strategy.report()
         return report
         
     """ Stores the report made """
-    def record(self, report):
+    def record(self, test_reports, fix_reports):
         #TODO(cgavidia): I'm not sure if I'm going to use this. Just in case.
-        self.release_reports.append(report)
+        self.release_reports.append(test_reports)
+        self.fix_reports.append(fix_reports)
 
 class SoftwareTesting:
     """ Manages the testing of an specific release """
@@ -68,36 +80,57 @@ class SoftwareTesting:
         self.developer_team = developer_team
         #TODO(cgavidia): I'm not sure if I'm going to use this. Just in case.
         self.release_reports = []
+        self.fix_reports = []
     
-    """ Executes the testing simulation for a number of releases """    
-    def test(self, no_of_releases=4):
+    """ Executes the testing simulation for a number of releases. It includes now
+    the fix procedure"""    
+    def test_and_fix(self, no_of_releases=4):
+        #TODO(cgavidia): Evaluate if this is convenient: To first execute ALL
+        # the reporting and then ALL the fixing.
         for release in range(no_of_releases):
-            reports = [tester.report() for tester in self.tester_team]
-            self.release_reports.append(reports)
+            test_reports = [tester.report() for tester in self.tester_team]
+            self.release_reports.append(test_reports)
+            
+            fix_reports = self.developer_team.fix(test_reports)
+            self.fix_reports.append(fix_reports)
+            
+            for index, tester in enumerate(self.tester_team):
+                tester.record(test_reports[index], fix_reports[index])
+                
     
     """ Applies fixes to the defects reported """        
-    def fix(self):
-        fix_reports = [self.developer_team.fix(test_reports) 
-                        for test_reports in self.release_reports]
+    def consolidate_report(self):
         consolidated_reports = []
         
-        for tester_index in range(len(self.tester_team)):
-            tester_reports = [release_report[tester_index] 
-                                for release_report in fix_reports]
-            severe_fixes = [fix_report[0] for fix_report in tester_reports]
-            non_severe_fixes = [fix_report[1] for fix_report in tester_reports]
+        for index, tester in enumerate(self.tester_team):
+            tester_fix_reports = [release_fix_report[index] 
+                                for release_fix_report in self.fix_reports]
+                                    
+            severe_fixes = [fix_report[0] for fix_report in tester_fix_reports]
+            non_severe_fixes = [fix_report[1] for fix_report in tester_fix_reports]
+            
             consolidated_report = sum(severe_fixes), sum(non_severe_fixes)
-            consolidated_reports.append(consolidated_report)
+            consolidated_reports.append(consolidated_report)            
             
         return consolidated_reports        
 
 if __name__ == "__main__":
     dev_team = DeveloperTeam()
-    tester_team = [Tester(), Tester()]
+    tester_1_strategy = MaxMinTestingStrategy() 
+    tester_2_strategy = MaxMinTestingStrategy()
+    
+    tester_1 = Tester(tester_1_strategy)
+    tester_2 = Tester(tester_2_strategy)
+
+    tester_team = [tester_1, tester_2]
 
     product_testing = SoftwareTesting(tester_team, dev_team)
-    product_testing.test(2)
-    fixes = product_testing.fix()
+    product_testing.test_and_fix(2)
+    fixes = product_testing.consolidate_report()
     
     print 'fixes ', fixes  
+    print 'tester_1.release_reports  ', tester_1.release_reports  
+    print 'tester_1.fix_reports  ', tester_1.fix_reports  
+    print 'tester_2.release_reports  ', tester_2.release_reports  
+    print 'tester_2.fix_reports  ', tester_2.fix_reports  
     

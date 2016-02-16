@@ -8,10 +8,8 @@ import crest.jira.data.miner.csv.BaseCsvGenerator;
 import crest.jira.data.miner.db.JiraIssueListDao;
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.miner.report.model.ExtendedUser;
-import crest.jira.data.miner.report.model.ReleaseDateComparator;
-import crest.jira.data.retriever.model.Version;
 import crest.jira.gametheory.priority.model.TesterBehaviour;
-import crest.jira.gametheory.priority.model.TestingEffortPerRelease;
+import crest.jira.gametheory.priority.model.TestingEffortPerTimeFrame;
 
 import org.apache.commons.collections4.MultiValuedMap;
 
@@ -31,6 +29,7 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
   private static final String BOARD_ID = "2";
   private static final boolean ONLY_BUGS = true;
   private static final String TESTER_BEHAVIOUR = "Tester_Behaviour_Board_" + BOARD_ID;
+  private static int MAXIMUM_RELEASES = 16;
 
   public GenerateGameStagesCsvFile() {
     // TODO(cgavidia): This is wrong. Fix later.
@@ -62,32 +61,33 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
     JiraIssueListDao issueListDao = new JiraIssueListDao(connectionSource);
     issueListDao.loadBoardIssues(boardId, ONLY_BUGS);
 
-    MultiValuedMap<Version, ExtendedIssue> issuesInReleases = issueListDao.organizeInReleases();
+    MultiValuedMap<String, ExtendedIssue> issuesPerMonth = issueListDao.organizeInTimeFrames();
     Set<ExtendedUser> reportersPerBoard = issueListDao.getReporterCatalogPerBoard(boardId);
-    logger.info("reportersPerBoard.size()" + reportersPerBoard.size());
+    logger.info("reportersPerBoard.size() " + reportersPerBoard.size());
 
-    List<TesterBehaviour> testerPlays = getStageGames(issuesInReleases, reportersPerBoard);
-    logger.info("testerPlays.size()" + testerPlays.size());
+    List<TesterBehaviour> testerPlays = getStageGames(issuesPerMonth, reportersPerBoard);
+    logger.info(" " + testerPlays.size());
 
     generateCsvFile(TESTER_BEHAVIOUR, testerPlays);
   }
 
   private static List<TesterBehaviour> getStageGames(
-      MultiValuedMap<Version, ExtendedIssue> issuesInReleases,
-      Set<ExtendedUser> reportersPerBoard) {
+      MultiValuedMap<String, ExtendedIssue> issuesPerMonth, Set<ExtendedUser> reportersPerBoard) {
 
     List<TesterBehaviour> testerBehaviours = new ArrayList<TesterBehaviour>();
-    List<Version> releases = new ArrayList<>(issuesInReleases.keySet());
-    Collections.sort(releases, new ReleaseDateComparator());
+    List<String> months = new ArrayList<>(issuesPerMonth.keySet());
+    Collections.sort(months);
 
-    for (Version release : releases) {
-      List<ExtendedIssue> issuesPerRelease = (List<ExtendedIssue>) issuesInReleases.get(release);
-      TestingEffortPerRelease stageGame = new TestingEffortPerRelease(release, reportersPerBoard,
+    MAXIMUM_RELEASES = months.size();
+    for (int monthIndex = 0; monthIndex < MAXIMUM_RELEASES; monthIndex += 1) {
+      String month = months.get(monthIndex);
+
+      List<ExtendedIssue> issuesPerRelease = (List<ExtendedIssue>) issuesPerMonth.get(month);
+      TestingEffortPerTimeFrame stageGame = new TestingEffortPerTimeFrame(month, reportersPerBoard,
           issuesPerRelease);
       testerBehaviours.addAll(stageGame.getTesterBehaviours());
       stageGame.calculateInflationRatioMetrics();
     }
-
     return testerBehaviours;
   }
 

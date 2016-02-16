@@ -3,7 +3,7 @@ package crest.jira.gametheory.priority.game;
 import crest.jira.data.miner.csv.CsvExportSupport;
 import crest.jira.gametheory.priority.model.TesterBehaviour;
 import crest.jira.gametheory.priority.model.TestingCsvConfiguration;
-import crest.jira.gametheory.priority.model.TestingEffortPerRelease;
+import crest.jira.gametheory.priority.model.TestingEffortPerTimeFrame;
 
 import org.apache.commons.math3.random.EmpiricalDistribution;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -19,7 +19,7 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
   private static final String PAYOFF_NOT_READY = "NOT READY";
 
   private List<SummaryStatistics> payoffStatistics;
-  private TestingEffortPerRelease releaseTestingEffort;
+  private TestingEffortPerTimeFrame releaseTestingEffort;
   private int numberOfPlayers;
   private List<Double> strategySubset;
 
@@ -35,7 +35,7 @@ public class ReleaseTestStrategyProfile implements CsvExportSupport {
     this.numberOfPlayers = playerStrategies.length;
     this.strategySubset = Arrays.asList(strategySubset);
     this.payoffStatistics = new ArrayList<>();
-    this.releaseTestingEffort = new TestingEffortPerRelease();
+    this.releaseTestingEffort = new TestingEffortPerTimeFrame();
 
     for (double playerStrategy : playerStrategies) {
       this.payoffStatistics.add(new SummaryStatistics());

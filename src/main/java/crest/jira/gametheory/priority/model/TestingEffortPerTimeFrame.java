@@ -2,7 +2,6 @@ package crest.jira.gametheory.priority.model;
 
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.miner.report.model.ExtendedUser;
-import crest.jira.data.retriever.model.Version;
 
 import org.apache.commons.collections4.Closure;
 import org.apache.commons.collections4.IterableUtils;
@@ -14,13 +13,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class TestingEffortPerRelease {
+public class TestingEffortPerTimeFrame {
 
-  private static Logger logger = Logger.getLogger(TestingEffortPerRelease.class.getName());
+  private static Logger logger = Logger.getLogger(TestingEffortPerTimeFrame.class.getName());
   protected static final Integer NEXT_RELEASE = 0;
   public static final int MINIMUM_INVOLVEMENT = 3;
 
   private Long developerProductivity;
+  private Long releaseRejection;
   private Long testerProductivity;
   private Double developerProductivityRatio;
   private Long releaseInflation;
@@ -31,7 +31,7 @@ public class TestingEffortPerRelease {
   private double varianceForInflationRatio;
   private double releaseSeverityRatio = 0.0;
 
-  private Version release;
+  private String timeFrame;
   private List<TesterBehaviour> testingResults = null;
 
   public static Predicate<ExtendedIssue> FIXED_NEXT_RELEASE = new Predicate<ExtendedIssue>() {
@@ -41,24 +41,32 @@ public class TestingEffortPerRelease {
     }
   };
 
-  public TestingEffortPerRelease() {
+  public static final Predicate<ExtendedIssue> RELEASE_REJECTIONS = new Predicate<ExtendedIssue>() {
+    @Override
+    public boolean evaluate(ExtendedIssue extendedIssue) {
+      return extendedIssue.getIssue().getResolution() != null
+          && !extendedIssue.isAcceptedByDevTeam();
+    }
+  };
+
+  public TestingEffortPerTimeFrame() {
     this.testingResults = new ArrayList<>();
   }
 
   /**
    * Represents the Priority Inflation game for a single release.
    * 
-   * @param release
+   * @param timeFrame
    *          Release.
    * @param reportersPerBoard
    *          Reporters for the current board.
    * @param totalIssuesPerRelease
    *          Issues reported prior to the release.
    */
-  public TestingEffortPerRelease(Version release, Set<ExtendedUser> reportersPerBoard,
+  public TestingEffortPerTimeFrame(String timeFrame, Set<ExtendedUser> reportersPerBoard,
       List<ExtendedIssue> totalIssuesPerRelease) {
 
-    this.release = release;
+    this.timeFrame = timeFrame;
     this.testingResults = new ArrayList<>();
     List<ExtendedIssue> filteredIssuesPerRelease = new ArrayList<>();
 
@@ -80,12 +88,13 @@ public class TestingEffortPerRelease {
       }
     }
 
-    calculateReleaseMetrics(release, filteredIssuesPerRelease);
+    calculateReleaseMetrics(filteredIssuesPerRelease);
   }
 
-  private void calculateReleaseMetrics(Version release, List<ExtendedIssue> issuesForAnalysis) {
+  private void calculateReleaseMetrics(List<ExtendedIssue> issuesForAnalysis) {
 
     this.developerProductivity = IterableUtils.countMatches(issuesForAnalysis, FIXED_NEXT_RELEASE);
+    this.releaseRejection = IterableUtils.countMatches(issuesForAnalysis, RELEASE_REJECTIONS);
     this.testerProductivity = (long) issuesForAnalysis.size();
     this.developerProductivityRatio = this.developerProductivity
         / ((double) this.testerProductivity);
@@ -215,12 +224,16 @@ public class TestingEffortPerRelease {
     return releaseSeverityRatio;
   }
 
+  public Long getReleaseRejection() {
+    return releaseRejection;
+  }
+
   public List<TesterBehaviour> getTesterBehaviours() {
     return testingResults;
   }
 
-  public Version getRelease() {
-    return release;
+  public String getTimeFrame() {
+    return timeFrame;
   }
 
 }
