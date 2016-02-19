@@ -27,27 +27,44 @@ public class TestReport {
     }
   };
 
+  public static Predicate<ExtendedIssue> DEFAULT_REPORTED = new Predicate<ExtendedIssue>() {
+    @Override
+    public boolean evaluate(ExtendedIssue issue) {
+      return issue.isReportedDefault();
+    }
+  };
+
   public static Predicate<ExtendedIssue> NON_SEVERE_REPORTED = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
-      return issue.isReportedNonSevere() || issue.isReportedDefault();
+      return issue.isReportedNonSevere();
     }
   };
 
   public static Predicate<ExtendedIssue> NON_SEVERE_FOUND = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
-      return issue.isReportedNonSevere() || issue.isReportedDefault()
-          || issue.isProbablyAnInflation();
+      return issue.isReportedNonSevere()
+          || (issue.isProbablyAnInflation() && issue.getReleasesToBeFixed() == null);
+    }
+  };
+
+  public static Predicate<ExtendedIssue> DEFAULT_FOUND = new Predicate<ExtendedIssue>() {
+    @Override
+    public boolean evaluate(ExtendedIssue issue) {
+      return issue.isReportedDefault()
+          || (issue.isProbablyAnInflation() && issue.getReleasesToBeFixed() != null);
     }
   };
 
   private long issuesReported = 0;
   private long inflatedReports = 0;
   private long severeIssuesFound = 0;
+  private long nonSevereIssuesFound = 0;
+  private long defaultIssuesFound = 0;
   private long nonSevereIssuesReported = 0;
   private long severeIssuesReported = 0;
-  private long nonSevereIssuesFound = 0;
+  private long defaultIssuesReported = 0;
   private Double inflationRatio = 0.0;
   private Double severeRationInReport = 0.0;
   private Double nonSevereRationInReport = 0.0;
@@ -77,7 +94,10 @@ public class TestReport {
 
     this.severeIssuesFound = IterableUtils.countMatches(issuesByUser, SEVERE_FOUND);
     this.nonSevereIssuesFound = IterableUtils.countMatches(issuesByUser, NON_SEVERE_FOUND);
+    this.defaultIssuesFound = IterableUtils.countMatches(issuesByUser, DEFAULT_FOUND);
+
     this.nonSevereIssuesReported = IterableUtils.countMatches(issuesByUser, NON_SEVERE_REPORTED);
+    this.defaultIssuesReported = IterableUtils.countMatches(issuesByUser, DEFAULT_REPORTED);
     this.inflatedReports = IterableUtils.countMatches(issuesByUser, INFLATED);
     this.severeIssuesReported = this.inflatedReports + this.severeIssuesFound;
 
@@ -163,12 +183,20 @@ public class TestReport {
     return severeIssuesReported;
   }
 
-  public Double getSevereRationInReport() {
+  public Double getSevereRatioInReport() {
     return severeRationInReport;
   }
 
   public Double getNonSevereRationInReport() {
     return nonSevereRationInReport;
+  }
+
+  public long getDefaultIssuesFound() {
+    return defaultIssuesFound;
+  }
+
+  public long getDefaultIssuesReported() {
+    return defaultIssuesReported;
   }
 
   public String getTimeFrame() {

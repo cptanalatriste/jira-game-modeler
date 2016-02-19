@@ -1,6 +1,6 @@
 package crest.jira.gametheory.priority.model;
 
-import crest.jira.data.miner.csv.CsvExportSupport;
+import crest.jira.data.miner.csv.BaseCsvRecord;
 import crest.jira.data.miner.report.model.ExtendedIssue;
 import crest.jira.data.miner.report.model.ExtendedUser;
 import crest.jira.gametheory.priority.regression.DataEntry;
@@ -8,11 +8,10 @@ import crest.jira.gametheory.priority.regression.DataEntry;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.csv.CSVRecord;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class TesterBehaviour implements CsvExportSupport, DataEntry {
+public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
   private static Logger logger = Logger.getLogger(TesterBehaviour.class.getName());
 
@@ -135,7 +134,7 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
     return nextReleaseFixes;
   }
 
-  public ExtendedUser getUser() {
+  public ExtendedUser getExtendedUser() {
     return extendedUser;
   }
 
@@ -206,96 +205,82 @@ public class TesterBehaviour implements CsvExportSupport, DataEntry {
 
   // TODO(cgavidia): We need to refactor this cumbersome two-method way of doing
   // this.
-  @Override
-  public List<Object> getCsvRecord() {
-    List<Object> recordAsList = new ArrayList<>();
-    recordAsList.add(this.testingEffort.getTimeFrame());
-    recordAsList.add(this.extendedUser.getUser().getName());
-    recordAsList.add(this.extendedUser.getReleaseParticipation());
-    recordAsList.add(this.extendedUser.getRegressionForInflation().getSlope());
-
-    recordAsList.add(this.testingEffort.getDeveloperProductivity());
-    recordAsList.add(this.testingEffort.getReleaseRejection());
-    recordAsList.add(this.testingEffort.getTestTeamProductivity());
-    recordAsList.add(this.testingEffort.getDeveloperProductivityRatio());
-    recordAsList.add(this.testingEffort.getReleaseInflation());
-    recordAsList.add(this.testingEffort.getReleaseSeverityRatio());
-    recordAsList.add(this.testingEffort.getAverageForInflationRatio());
-    recordAsList.add(this.testingEffort.getMedianForInflationRatio());
-    recordAsList.add(this.testingEffort.getVarianceForInflationRatio());
-
-    recordAsList.add(this.testReport.getIssuesReported());
-    recordAsList.add(this.testReport.getInflatedReports());
-    recordAsList.add(this.testReport.getInflationRatio());
-    recordAsList.add(this.testReport.getSevereRationInReport());
-    recordAsList.add(this.testReport.getNonSevereRationInReport());
-
-    recordAsList.add(this.testReport.getSevereIssuesFound());
-    recordAsList.add(this.testReport.getSevereIssuesReported());
-    recordAsList.add(this.testReport.getNonSevereIssuesReported());
-    recordAsList.add(this.testReport.getNonSevereIssuesFound());
-
-    recordAsList.add(this.getExternalInflation());
-    recordAsList.add(this.getExternalSeverity());
-
-    recordAsList.add(this.getNextReleaseFixes());
-    recordAsList.add(this.getRejectedIssues());
-    recordAsList.add(this.getSuccessRatio());
-    recordAsList.add(this.getFixProbabilityForSevere());
-    recordAsList.add(this.getFixProbabilityForNonSevere());
-    recordAsList.add(this.getExpectedSevereFixes());
-    recordAsList.add(this.getExpectedInflatedFixes());
-    recordAsList.add(this.getExpectedNonSevereFixes());
-    recordAsList.add(this.getExpectedFixes());
-
-    return recordAsList;
-  }
 
   @Override
-  public String[] getCsvHeader() {
-    List<String> headerAsList = new ArrayList<String>();
+  public void configureCsvRecord() {
 
-    headerAsList.add(TestingCsvConfiguration.RELEASE);
-    headerAsList.add(TestingCsvConfiguration.TESTER);
-    headerAsList.add(TestingCsvConfiguration.TESTER_PARTICIPATION);
-    headerAsList.add(TestingCsvConfiguration.TESTER_INFLATION_SLOPE);
+    this.addDataItem(TestingCsvConfiguration.RELEASE, this.testingEffort.getTimeFrame());
+    this.addDataItem(TestingCsvConfiguration.TESTER, this.extendedUser.getUser().getName());
+    this.addDataItem(TestingCsvConfiguration.TESTER_PARTICIPATION,
+        this.extendedUser.getReleaseParticipation());
+    this.addDataItem(TestingCsvConfiguration.TESTER_INFLATION_SLOPE,
+        this.extendedUser.getRegressionForInflation().getSlope());
 
-    headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY);
-    headerAsList.add(TestingCsvConfiguration.RELEASE_REJECTION);
+    this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY,
+        this.testingEffort.getDeveloperProductivity());
+    this.addDataItem(TestingCsvConfiguration.RELEASE_REJECTION,
+        this.testingEffort.getTimeFrameRejection());
 
-    headerAsList.add(TestingCsvConfiguration.TESTER_PRODUCTIVITY);
-    headerAsList.add(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO);
-    headerAsList.add(TestingCsvConfiguration.RELEASE_INFLATION);
-    headerAsList.add(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO);
-    headerAsList.add(TestingCsvConfiguration.AVG_INFLATION_RATIO);
-    headerAsList.add(TestingCsvConfiguration.MED_INFLATION_RATIO);
-    headerAsList.add(TestingCsvConfiguration.VAR_INFLATION_RATIO);
+    this.addDataItem(TestingCsvConfiguration.TESTER_PRODUCTIVITY,
+        this.testingEffort.getTestTeamProductivity());
+    this.addDataItem(TestingCsvConfiguration.NUMBER_OF_TESTERS,
+        this.testingEffort.getNumberOfTesters());
+    this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO,
+        this.testingEffort.getDeveloperProductivityRatio());
+    this.addDataItem(TestingCsvConfiguration.RELEASE_INFLATION,
+        this.testingEffort.getReleaseInflation());
+    this.addDataItem(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO,
+        this.testingEffort.getTimeFrameSeverityRatio());
+    this.addDataItem(TestingCsvConfiguration.AVG_INFLATION_RATIO,
+        this.testingEffort.getAverageForInflationRatio());
+    this.addDataItem(TestingCsvConfiguration.MED_INFLATION_RATIO,
+        this.testingEffort.getMedianForInflationRatio());
+    this.addDataItem(TestingCsvConfiguration.VAR_INFLATION_RATIO,
+        this.testingEffort.getVarianceForInflationRatio());
 
-    headerAsList.add(TestingCsvConfiguration.ISSUES_REPORTED);
-    headerAsList.add(TestingCsvConfiguration.POSSIBLE_INFLATIONS);
-    headerAsList.add(TestingCsvConfiguration.INFLATION_RATIO);
-    headerAsList.add(TestingCsvConfiguration.SEVERE_RATIO_REPORTED);
-    headerAsList.add(TestingCsvConfiguration.NON_SEVERE_RATIO_REPORTED);
+    this.addDataItem(TestingCsvConfiguration.ISSUES_REPORTED, this.testReport.getIssuesReported());
 
-    headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_FOUND);
-    headerAsList.add(TestingCsvConfiguration.SEVERE_ISSUES_REPORTED);
-    headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED);
-    headerAsList.add(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND);
+    this.addDataItem(TestingCsvConfiguration.INFLATION_RATIO, this.testReport.getInflationRatio());
+    this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
+        this.testReport.getSevereRatioInReport());
+    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_RATIO_REPORTED,
+        this.testReport.getNonSevereRationInReport());
+    this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
+        this.testReport.getSevereRatioInReport());
 
-    headerAsList.add(TestingCsvConfiguration.EXTERNAL_INFLATION);
-    headerAsList.add(TestingCsvConfiguration.EXTERNAL_SEVERITY);
+    this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_FOUND,
+        this.testReport.getSevereIssuesFound());
+    this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_FOUND,
+        this.testReport.getDefaultIssuesFound());
+    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND,
+        this.testReport.getNonSevereIssuesFound());
 
-    headerAsList.add(TestingCsvConfiguration.NEXT_RELEASE_FIXES);
-    headerAsList.add(TestingCsvConfiguration.REJECTED_ISSUES);
-    headerAsList.add(TestingCsvConfiguration.SUCCESS_RATIO);
-    headerAsList.add(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY);
-    headerAsList.add(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY);
-    headerAsList.add(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES);
-    headerAsList.add(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES);
-    headerAsList.add(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES);
-    headerAsList.add(TestingCsvConfiguration.EXPECTED_FIXES);
+    this.addDataItem(TestingCsvConfiguration.POSSIBLE_INFLATIONS,
+        this.testReport.getInflatedReports());
 
-    return headerAsList.toArray(new String[headerAsList.size()]);
+    this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_REPORTED,
+        this.testReport.getSevereIssuesReported());
+    this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_REPORTED,
+        this.testReport.getDefaultIssuesReported());
+    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED,
+        this.testReport.getNonSevereIssuesReported());
+
+    this.addDataItem(TestingCsvConfiguration.EXTERNAL_INFLATION, this.getExternalInflation());
+    this.addDataItem(TestingCsvConfiguration.EXTERNAL_SEVERITY, this.getExternalSeverity());
+
+    this.addDataItem(TestingCsvConfiguration.NEXT_RELEASE_FIXES, this.getNextReleaseFixes());
+    this.addDataItem(TestingCsvConfiguration.REJECTED_ISSUES, this.getRejectedIssues());
+    this.addDataItem(TestingCsvConfiguration.SUCCESS_RATIO, this.getSuccessRatio());
+    this.addDataItem(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY,
+        this.getFixProbabilityForSevere());
+    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY,
+        this.getFixProbabilityForNonSevere());
+    this.addDataItem(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES, this.getExpectedSevereFixes());
+    this.addDataItem(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES,
+        this.getExpectedInflatedFixes());
+    this.addDataItem(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES,
+        this.getExpectedNonSevereFixes());
+    this.addDataItem(TestingCsvConfiguration.EXPECTED_FIXES, this.getExpectedFixes());
   }
 
   public double getInflationRatio() {

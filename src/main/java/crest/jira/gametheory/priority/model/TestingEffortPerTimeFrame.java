@@ -9,6 +9,7 @@ import org.apache.commons.collections4.Predicate;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -16,12 +17,17 @@ import java.util.logging.Logger;
 public class TestingEffortPerTimeFrame {
 
   private static Logger logger = Logger.getLogger(TestingEffortPerTimeFrame.class.getName());
+
+  private static final List<String> TOP_REPORTER_LIST = Arrays.asList("rayeesn", "sangeethah",
+      "chandanp", "jessicawang", "sailaja", "parth", "minchen07", "alena1108", "nitinme",
+      "minchen07");
   protected static final Integer NEXT_RELEASE = 0;
-  public static final int MINIMUM_INVOLVEMENT = 3;
+  public static final int MINIMUM_INVOLVEMENT = 5;
 
   private Long developerProductivity;
-  private Long releaseRejection;
+  private Long timeFrameRejection;
   private Long testerProductivity;
+  private int numberOfTesters;
   private Double developerProductivityRatio;
   private Long releaseInflation;
   private Long releaseNonInflatedSeverity;
@@ -29,7 +35,7 @@ public class TestingEffortPerTimeFrame {
   private double averageForInflationRatio;
   private double medianForInflationRatio;
   private double varianceForInflationRatio;
-  private double releaseSeverityRatio = 0.0;
+  private double timeFrameSeverityRation = 0.0;
 
   private String timeFrame;
   private List<TesterBehaviour> testingResults = null;
@@ -78,9 +84,9 @@ public class TestingEffortPerTimeFrame {
       List<ExtendedIssue> issueListByUser = issuesByUser.get(0);
       TesterBehaviour testerPlay = new TesterBehaviour(extendedUser, this, issueListByUser);
 
-      // We're only interested in the issues reported by testers involved in the
+      // We"re only interested in the issues reported by testers involved in the
       // project.
-      if (testerPlay.getTestReport().getIssuesReported() > MINIMUM_INVOLVEMENT) {
+      if (isPlayValid(testerPlay)) {
         this.testingResults.add(testerPlay);
         extendedUser.reportParticipation();
 
@@ -88,13 +94,24 @@ public class TestingEffortPerTimeFrame {
       }
     }
 
-    calculateReleaseMetrics(filteredIssuesPerRelease);
+    calculateTimeFrameMetrics(filteredIssuesPerRelease);
   }
 
-  private void calculateReleaseMetrics(List<ExtendedIssue> issuesForAnalysis) {
+  private boolean isPlayValid(TesterBehaviour testerPlay) {
+    boolean isInvolved = testerPlay.getTestReport().getIssuesReported() > MINIMUM_INVOLVEMENT;
+    
+    //Uncomment this for top-reporter filtering
+    //boolean isTopReporter = TOP_REPORTER_LIST
+    //    .contains(testerPlay.getExtendedUser().getUser().getName());
+    boolean isTopReporter = true;
 
+    return isTopReporter && isInvolved;
+  }
+
+  private void calculateTimeFrameMetrics(List<ExtendedIssue> issuesForAnalysis) {
+    this.numberOfTesters = this.testingResults.size();
     this.developerProductivity = IterableUtils.countMatches(issuesForAnalysis, FIXED_NEXT_RELEASE);
-    this.releaseRejection = IterableUtils.countMatches(issuesForAnalysis, RELEASE_REJECTIONS);
+    this.timeFrameRejection = IterableUtils.countMatches(issuesForAnalysis, RELEASE_REJECTIONS);
     this.testerProductivity = (long) issuesForAnalysis.size();
     this.developerProductivityRatio = this.developerProductivity
         / ((double) this.testerProductivity);
@@ -105,7 +122,7 @@ public class TestingEffortPerTimeFrame {
         TestReport.NON_SEVERE_REPORTED);
 
     if (this.testerProductivity > 0) {
-      this.releaseSeverityRatio = this.releaseNonInflatedSeverity
+      this.timeFrameSeverityRation = this.releaseNonInflatedSeverity
           / (double) this.testerProductivity;
     }
 
@@ -220,12 +237,16 @@ public class TestingEffortPerTimeFrame {
     return medianForInflationRatio;
   }
 
-  public double getReleaseSeverityRatio() {
-    return releaseSeverityRatio;
+  public double getTimeFrameSeverityRatio() {
+    return timeFrameSeverityRation;
   }
 
-  public Long getReleaseRejection() {
-    return releaseRejection;
+  public int getNumberOfTesters() {
+    return numberOfTesters;
+  }
+
+  public Long getTimeFrameRejection() {
+    return timeFrameRejection;
   }
 
   public List<TesterBehaviour> getTesterBehaviours() {

@@ -24,12 +24,13 @@ import java.util.logging.Logger;
 
 public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
 
+  private static final String TIME_FRAME_FOR_2015 = "2015";
+
   private static Logger logger = Logger.getLogger(GenerateGameStagesCsvFile.class.getName());
 
   private static final String BOARD_ID = "2";
   private static final boolean ONLY_BUGS = true;
   private static final String TESTER_BEHAVIOUR = "Tester_Behaviour_Board_" + BOARD_ID;
-  private static int MAXIMUM_RELEASES = 16;
 
   public GenerateGameStagesCsvFile() {
     // TODO(cgavidia): This is wrong. Fix later.
@@ -78,17 +79,23 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
     List<String> months = new ArrayList<>(issuesPerMonth.keySet());
     Collections.sort(months);
 
-    MAXIMUM_RELEASES = months.size();
-    for (int monthIndex = 0; monthIndex < MAXIMUM_RELEASES; monthIndex += 1) {
+    for (int monthIndex = 0; monthIndex < months.size(); monthIndex += 1) {
       String month = months.get(monthIndex);
 
-      List<ExtendedIssue> issuesPerRelease = (List<ExtendedIssue>) issuesPerMonth.get(month);
-      TestingEffortPerTimeFrame stageGame = new TestingEffortPerTimeFrame(month, reportersPerBoard,
-          issuesPerRelease);
-      testerBehaviours.addAll(stageGame.getTesterBehaviours());
-      stageGame.calculateInflationRatioMetrics();
+      if (includeTimeFrame(month)) {
+        List<ExtendedIssue> issuesPerRelease = (List<ExtendedIssue>) issuesPerMonth.get(month);
+        TestingEffortPerTimeFrame stageGame = new TestingEffortPerTimeFrame(month,
+            reportersPerBoard, issuesPerRelease);
+        testerBehaviours.addAll(stageGame.getTesterBehaviours());
+        stageGame.calculateInflationRatioMetrics();
+      }
+
     }
     return testerBehaviours;
+  }
+
+  private static boolean includeTimeFrame(String month) {
+    return !month.startsWith(TIME_FRAME_FOR_2015);
   }
 
 }

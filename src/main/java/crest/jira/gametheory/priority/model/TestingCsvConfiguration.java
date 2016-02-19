@@ -44,5 +44,8 @@ public class TestingCsvConfiguration {
   public static final String SUCCESS_RATIO = "Success Ratio";
   public static final String REJECTED_ISSUES = "Rejected Issues";
   public static final String RELEASE_REJECTION = "Release Rejection";
+  public static final String NUMBER_OF_TESTERS = "Number of Testers";
+  public static final String DEFAULT_ISSUES_FOUND = "Default Issues Found";
+  public static final String DEFAULT_ISSUES_REPORTED = "Default Issues Reported";
 
 }
