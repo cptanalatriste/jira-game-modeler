@@ -95,7 +95,9 @@ public class GenerateGameStagesCsvFile extends BaseCsvGenerator {
   }
 
   private static boolean includeTimeFrame(String month) {
-    return !month.startsWith(TIME_FRAME_FOR_2015);
+    return true;
+    // Uncomment this to filter for 2015
+    // return !month.startsWith(TIME_FRAME_FOR_2015);
   }
 
 }

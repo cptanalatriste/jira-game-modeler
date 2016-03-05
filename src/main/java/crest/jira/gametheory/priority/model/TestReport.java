@@ -16,14 +16,21 @@ public class TestReport {
   public static Predicate<ExtendedIssue> INFLATED = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
-      return issue.isProbablyAnInflation();
+      return issue.isInflated();
     }
   };
 
   public static Predicate<ExtendedIssue> SEVERE_FOUND = new Predicate<ExtendedIssue>() {
     @Override
     public boolean evaluate(ExtendedIssue issue) {
-      return issue.isReportedSevere() && !issue.isProbablyAnInflation();
+      return issue.isReportedSevere() && !issue.isInflated();
+    }
+  };
+
+  public static Predicate<ExtendedIssue> SEVERE_REPORTED = new Predicate<ExtendedIssue>() {
+    @Override
+    public boolean evaluate(ExtendedIssue issue) {
+      return issue.isReportedSevere();
     }
   };
 
@@ -43,22 +50,23 @@ public class TestReport {
 
   public static Predicate<ExtendedIssue> NON_SEVERE_FOUND = new Predicate<ExtendedIssue>() {
     @Override
-    public boolean evaluate(ExtendedIssue issue) {
-      return issue.isReportedNonSevere()
-          || (issue.isProbablyAnInflation() && issue.getReleasesToBeFixed() == null);
+    public boolean evaluate(ExtendedIssue extendedIssue) {
+      return extendedIssue.isReportedNonSevere() || extendedIssue.isANonSevereInflated();
     }
   };
 
   public static Predicate<ExtendedIssue> DEFAULT_FOUND = new Predicate<ExtendedIssue>() {
     @Override
-    public boolean evaluate(ExtendedIssue issue) {
-      return issue.isReportedDefault()
-          || (issue.isProbablyAnInflation() && issue.getReleasesToBeFixed() != null);
+    public boolean evaluate(ExtendedIssue extendedIssue) {
+      return extendedIssue.isReportedDefault() || extendedIssue.isADefaultInflated();
     }
   };
 
   private long issuesReported = 0;
   private long inflatedReports = 0;
+  private long defaultIssuesInflated = 0;
+  private long nonSevereIssuesInflated = 0;
+
   private long severeIssuesFound = 0;
   private long nonSevereIssuesFound = 0;
   private long defaultIssuesFound = 0;
@@ -100,6 +108,9 @@ public class TestReport {
     this.defaultIssuesReported = IterableUtils.countMatches(issuesByUser, DEFAULT_REPORTED);
     this.inflatedReports = IterableUtils.countMatches(issuesByUser, INFLATED);
     this.severeIssuesReported = this.inflatedReports + this.severeIssuesFound;
+
+    this.defaultIssuesInflated = this.defaultIssuesFound - this.defaultIssuesReported;
+    this.nonSevereIssuesInflated = this.nonSevereIssuesFound - this.nonSevereIssuesReported;
 
     if (nonSevereIssuesFound != 0) {
       this.inflationRatio = inflatedReports / (double) nonSevereIssuesFound;
@@ -197,6 +208,14 @@ public class TestReport {
 
   public long getDefaultIssuesReported() {
     return defaultIssuesReported;
+  }
+
+  public long getDefaultIssuesInflated() {
+    return defaultIssuesInflated;
+  }
+
+  public long getNonSevereIssuesInflated() {
+    return nonSevereIssuesInflated;
   }
 
   public String getTimeFrame() {

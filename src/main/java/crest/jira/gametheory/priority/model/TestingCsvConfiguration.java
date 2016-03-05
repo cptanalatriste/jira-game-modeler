@@ -9,7 +9,7 @@ public class TestingCsvConfiguration {
   public static final String TESTER_PRODUCTIVITY = "Tester Productivity";
   public static final String DEVELOPER_PRODUCTIVITY_RATIO = "Developer Productivity Ratio";
 
-  public static final String RELEASE_INFLATION = "Release Inflation";
+  public static final String TIME_FRAME_INFLATION = "Release Inflation";
 
   public static final String ISSUES_REPORTED = "Issues Reported";
   public static final String POSSIBLE_INFLATIONS = "Possible Inflations";
@@ -47,5 +47,11 @@ public class TestingCsvConfiguration {
   public static final String NUMBER_OF_TESTERS = "Number of Testers";
   public static final String DEFAULT_ISSUES_FOUND = "Default Issues Found";
   public static final String DEFAULT_ISSUES_REPORTED = "Default Issues Reported";
+  public static final String NONSEVERE_INFLATION_RATIO = "Non-Severe Inflation Ratio";
+  public static final String DEFAULT_INFLATION_RATIO = "Default Inflation Ratio";
+  public static final String TIMEFRAME_INFLATION_RATIO = "Time Frame Inflation Ratio";
+  public static final String SEVERE_RELEASE_FIXES = "Severe Release Fixes";
+  public static final String DEFAULT_RELEASE_FIXES = "Default Release Fixes";
+  public static final String NONSEVERE_RELEASE_FIXES = "Non Severe Release Fixes";
 
 }

@@ -6,6 +6,8 @@ import crest.jira.data.miner.report.model.ExtendedUser;
 import crest.jira.gametheory.priority.regression.DataEntry;
 
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.collections4.Predicate;
+import org.apache.commons.collections4.PredicateUtils;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.List;
@@ -19,6 +21,10 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
   // TODO(cgavidia): Evaluate if this simple payoff needs to be modified.
   private Long nextReleaseFixes;
+  private Long severeReleaseFixes;
+  private Long nonSevereReleaseFixes;
+  private Long defaultReleaseFixes;
+
   private Long rejectedIssues;
   private ExtendedUser extendedUser;
   private TestingEffortPerTimeFrame testingEffort;
@@ -50,6 +56,7 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
    * @param issuesByUser
    *          Issues reported.
    */
+  @SuppressWarnings("unchecked")
   public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerTimeFrame testingEffort,
       List<ExtendedIssue> issuesByUser) {
     this.extendedUser = extendedUser;
@@ -59,6 +66,19 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
     this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
         TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE);
+
+    Predicate<ExtendedIssue> fixedAndSevere = PredicateUtils
+        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.SEVERE_REPORTED);
+    this.severeReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndSevere);
+
+    Predicate<ExtendedIssue> fixedAndDefault = PredicateUtils
+        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.DEFAULT_REPORTED);
+    this.defaultReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndDefault);
+
+    Predicate<ExtendedIssue> fixedAndNonSevere = PredicateUtils
+        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.NON_SEVERE_REPORTED);
+    this.nonSevereReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndNonSevere);
+
     this.rejectedIssues = IterableUtils.countMatches(issuesByUser,
         TestingEffortPerTimeFrame.RELEASE_REJECTIONS);
 
@@ -145,7 +165,7 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
   // TODO(cgavidia): Evaluate if this aggregation method is appropriate. The
   // other implies an explosion in dimensionality.
   public Long getExternalInflation() {
-    return this.testingEffort.getReleaseInflation() - this.testReport.getInflatedReports();
+    return this.testingEffort.getTimeFrameInflation() - this.testReport.getInflatedReports();
   }
 
   public Long getExternalSeverity() {
@@ -155,7 +175,7 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
   private Double getFixProbabilityForSevere() {
     double developerProductivity = this.testingEffort.getDeveloperProductivity();
-    long releaseReportedSeverity = this.testingEffort.getReleaseInflation()
+    long releaseReportedSeverity = this.testingEffort.getTimeFrameInflation()
         + this.testingEffort.getReleaseNonInflatedSeverity();
 
     double probability = developerProductivity / releaseReportedSeverity;
@@ -170,7 +190,7 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
   private Double getFixProbabilityForNonSevere() {
     // TODO(cgavidia): Evaluate numerator.
     double productivityRemaining = this.testingEffort.getDeveloperProductivity()
-        - this.testingEffort.getReleaseInflation()
+        - this.testingEffort.getTimeFrameInflation()
         - this.testingEffort.getReleaseNonInflatedSeverity();
 
     long releaseReportedNonSeverity = this.testingEffort.getReleaseReportedNonSeverity();
@@ -216,6 +236,11 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
     this.addDataItem(TestingCsvConfiguration.TESTER_INFLATION_SLOPE,
         this.extendedUser.getRegressionForInflation().getSlope());
 
+    this.addDataItem(TestingCsvConfiguration.NONSEVERE_INFLATION_RATIO,
+        this.extendedUser.getNonSevereInflationRatio());
+    this.addDataItem(TestingCsvConfiguration.DEFAULT_INFLATION_RATIO,
+        this.extendedUser.getDefaultInflationRatio());
+
     this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY,
         this.testingEffort.getDeveloperProductivity());
     this.addDataItem(TestingCsvConfiguration.RELEASE_REJECTION,
@@ -227,8 +252,10 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
         this.testingEffort.getNumberOfTesters());
     this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO,
         this.testingEffort.getDeveloperProductivityRatio());
-    this.addDataItem(TestingCsvConfiguration.RELEASE_INFLATION,
-        this.testingEffort.getReleaseInflation());
+    this.addDataItem(TestingCsvConfiguration.TIME_FRAME_INFLATION,
+        this.testingEffort.getTimeFrameInflation());
+    this.addDataItem(TestingCsvConfiguration.TIMEFRAME_INFLATION_RATIO,
+        this.testingEffort.getTimeFrameInflationRatio());
     this.addDataItem(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO,
         this.testingEffort.getTimeFrameSeverityRatio());
     this.addDataItem(TestingCsvConfiguration.AVG_INFLATION_RATIO,
@@ -269,6 +296,11 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
     this.addDataItem(TestingCsvConfiguration.EXTERNAL_SEVERITY, this.getExternalSeverity());
 
     this.addDataItem(TestingCsvConfiguration.NEXT_RELEASE_FIXES, this.getNextReleaseFixes());
+    this.addDataItem(TestingCsvConfiguration.SEVERE_RELEASE_FIXES, this.getSevereReleaseFixes());
+    this.addDataItem(TestingCsvConfiguration.DEFAULT_RELEASE_FIXES, this.getDefaultReleaseFixes());
+    this.addDataItem(TestingCsvConfiguration.NONSEVERE_RELEASE_FIXES,
+        this.getNonSevereReleaseFixes());
+
     this.addDataItem(TestingCsvConfiguration.REJECTED_ISSUES, this.getRejectedIssues());
     this.addDataItem(TestingCsvConfiguration.SUCCESS_RATIO, this.getSuccessRatio());
     this.addDataItem(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY,
@@ -310,6 +342,18 @@ public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
   public double getSuccessRatio() {
     return successRatio;
+  }
+
+  public Long getSevereReleaseFixes() {
+    return severeReleaseFixes;
+  }
+
+  public Long getNonSevereReleaseFixes() {
+    return nonSevereReleaseFixes;
+  }
+
+  public Long getDefaultReleaseFixes() {
+    return defaultReleaseFixes;
   }
 
   @Override

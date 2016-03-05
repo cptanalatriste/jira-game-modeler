@@ -18,18 +18,21 @@ public class TestingEffortPerTimeFrame {
 
   private static Logger logger = Logger.getLogger(TestingEffortPerTimeFrame.class.getName());
 
-  private static final List<String> TOP_REPORTER_LIST = Arrays.asList("rayeesn", "sangeethah",
-      "chandanp", "jessicawang", "sailaja", "parth", "minchen07", "alena1108", "nitinme",
-      "minchen07");
+  // Uncomment to support top-reporter filtering
+  private static final List<String> TOP_REPORTER_LIST_BOARD2 = Arrays.asList("jayapal",
+      "jessicawang", "prashantkm", "bharat.kumar", "minchen07", "likithas", "harikrishna.patnala",
+      "mlsorensen", "weizhou", "chandanp");
+
   protected static final Integer NEXT_RELEASE = 0;
-  public static final int MINIMUM_INVOLVEMENT = 5;
+  public static final int MINIMUM_INVOLVEMENT = 0;
 
   private Long developerProductivity;
   private Long timeFrameRejection;
   private Long testerProductivity;
   private int numberOfTesters;
   private Double developerProductivityRatio;
-  private Long releaseInflation;
+  private Long timeFrameInflation;
+  private float timeFrameInflationRatio;
   private Long releaseNonInflatedSeverity;
   private long releaseReportedNonSeverity;
   private double averageForInflationRatio;
@@ -88,8 +91,7 @@ public class TestingEffortPerTimeFrame {
       // project.
       if (isPlayValid(testerPlay)) {
         this.testingResults.add(testerPlay);
-        extendedUser.reportParticipation();
-
+        this.storeUserMetrics(extendedUser, testerPlay);
         filteredIssuesPerRelease.addAll(issueListByUser);
       }
     }
@@ -97,15 +99,28 @@ public class TestingEffortPerTimeFrame {
     calculateTimeFrameMetrics(filteredIssuesPerRelease);
   }
 
-  private boolean isPlayValid(TesterBehaviour testerPlay) {
-    boolean isInvolved = testerPlay.getTestReport().getIssuesReported() > MINIMUM_INVOLVEMENT;
-    
-    //Uncomment this for top-reporter filtering
-    //boolean isTopReporter = TOP_REPORTER_LIST
-    //    .contains(testerPlay.getExtendedUser().getUser().getName());
-    boolean isTopReporter = true;
+  private void storeUserMetrics(ExtendedUser extendedUser, TesterBehaviour testerPlay) {
+    extendedUser.registerParticipation();
+    TestReport testReport = testerPlay.getTestReport();
 
-    return isTopReporter && isInvolved;
+    extendedUser.registerDefaultReport(testReport.getDefaultIssuesFound(),
+        testReport.getDefaultIssuesInflated());
+    extendedUser.registerNonSevereReport(testReport.getNonSevereIssuesFound(),
+        testReport.getNonSevereIssuesInflated());
+
+  }
+
+  private boolean isPlayValid(TesterBehaviour testerPlay) {
+    // boolean isInvolved = testerPlay.getTestReport().getIssuesReported() >
+    // MINIMUM_INVOLVEMENT;
+
+    // Uncomment this for top-reporter filtering
+    boolean isTopReporter = TOP_REPORTER_LIST_BOARD2
+        .contains(testerPlay.getExtendedUser().getUser().getName());
+        // boolean isTopReporter = true;
+
+    // return isTopReporter && isInvolved;
+    return isTopReporter;
   }
 
   private void calculateTimeFrameMetrics(List<ExtendedIssue> issuesForAnalysis) {
@@ -115,7 +130,8 @@ public class TestingEffortPerTimeFrame {
     this.testerProductivity = (long) issuesForAnalysis.size();
     this.developerProductivityRatio = this.developerProductivity
         / ((double) this.testerProductivity);
-    this.releaseInflation = IterableUtils.countMatches(issuesForAnalysis, TestReport.INFLATED);
+    this.timeFrameInflation = IterableUtils.countMatches(issuesForAnalysis, TestReport.INFLATED);
+    this.timeFrameInflationRatio = timeFrameInflation / (float) testerProductivity;
     this.releaseNonInflatedSeverity = IterableUtils.countMatches(issuesForAnalysis,
         TestReport.SEVERE_FOUND);
     this.releaseReportedNonSeverity = IterableUtils.countMatches(issuesForAnalysis,
@@ -174,13 +190,13 @@ public class TestingEffortPerTimeFrame {
    */
   public void updateReleaseMetrics() {
 
-    this.releaseInflation = 0L;
+    this.timeFrameInflation = 0L;
     this.releaseNonInflatedSeverity = 0L;
     this.releaseReportedNonSeverity = 0;
     this.testerProductivity = 0L;
 
     for (TesterBehaviour testerBehaviour : this.testingResults) {
-      releaseInflation += testerBehaviour.getTestReport().getInflatedReports();
+      timeFrameInflation += testerBehaviour.getTestReport().getInflatedReports();
       releaseNonInflatedSeverity += testerBehaviour.getTestReport().getSevereIssuesFound();
       releaseReportedNonSeverity += testerBehaviour.getTestReport().getNonSevereIssuesFound()
           - testerBehaviour.getTestReport().getInflatedReports();
@@ -209,8 +225,8 @@ public class TestingEffortPerTimeFrame {
     this.developerProductivityRatio = developerProductivityRatio;
   }
 
-  public Long getReleaseInflation() {
-    return releaseInflation;
+  public Long getTimeFrameInflation() {
+    return timeFrameInflation;
   }
 
   public Long getReleaseNonInflatedSeverity() {
@@ -251,6 +267,10 @@ public class TestingEffortPerTimeFrame {
 
   public List<TesterBehaviour> getTesterBehaviours() {
     return testingResults;
+  }
+
+  public float getTimeFrameInflationRatio() {
+    return timeFrameInflationRatio;
   }
 
   public String getTimeFrame() {
