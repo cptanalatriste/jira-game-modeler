@@ -15,361 +15,358 @@ import java.util.logging.Logger;
 
 public class TesterBehaviour extends BaseCsvRecord implements DataEntry {
 
-  private static Logger logger = Logger.getLogger(TesterBehaviour.class.getName());
+    private static Logger logger = Logger.getLogger(TesterBehaviour.class.getName());
 
-  private TestReport testReport;
+    private TestReport testReport;
 
-  // TODO(cgavidia): Evaluate if this simple payoff needs to be modified.
-  private Long nextReleaseFixes;
-  private Long severeReleaseFixes;
-  private Long nonSevereReleaseFixes;
-  private Long defaultReleaseFixes;
+    // TODO(cgavidia): Evaluate if this simple payoff needs to be modified.
+    private Long nextReleaseFixes;
+    private Long severeReleaseFixes;
+    private Long nonSevereReleaseFixes;
+    private Long defaultReleaseFixes;
 
-  private Long rejectedIssues;
-  private ExtendedUser extendedUser;
-  private TestingEffortPerTimeFrame testingEffort;
+    private Long rejectedIssues;
+    private ExtendedUser extendedUser;
+    private TestingEffortPerTimeFrame testingEffort;
 
-  /**
-   * Percentage of non-severe issues that will be inflated.
-   */
-  private double inflationRatio;
-  private double successRatio;
+    /**
+     * Percentage of non-severe issues that will be inflated.
+     */
+    private double inflationRatio;
+    private double successRatio;
 
-  private double expectedSevereFixes;
-  private double expectedInflatedFixes;
-  private double expectedNonSevereFixes;
+    private double expectedSevereFixes;
+    private double expectedInflatedFixes;
+    private double expectedNonSevereFixes;
 
-  private double expectedFixes;
+    private double expectedFixes;
 
-  public TesterBehaviour(TestingEffortPerTimeFrame releaseTestingEffort) {
-    this.testReport = new TestReport();
-    this.testingEffort = releaseTestingEffort;
-  }
-
-  /**
-   * Stores the behavior of a Tester on an Specific release.
-   * 
-   * @param extendedUser
-   *          Tester.
-   * @param testingEffort
-   *          Testing metrics for the release.
-   * @param issuesByUser
-   *          Issues reported.
-   */
-  @SuppressWarnings("unchecked")
-  public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerTimeFrame testingEffort,
-      List<ExtendedIssue> issuesByUser) {
-    this.extendedUser = extendedUser;
-    this.testingEffort = testingEffort;
-    this.testReport = new TestReport(extendedUser.getUser(), issuesByUser,
-        testingEffort.getTimeFrame());
-
-    this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
-        TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE);
-
-    Predicate<ExtendedIssue> fixedAndSevere = PredicateUtils
-        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.SEVERE_REPORTED);
-    this.severeReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndSevere);
-
-    Predicate<ExtendedIssue> fixedAndDefault = PredicateUtils
-        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.DEFAULT_REPORTED);
-    this.defaultReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndDefault);
-
-    Predicate<ExtendedIssue> fixedAndNonSevere = PredicateUtils
-        .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.NON_SEVERE_REPORTED);
-    this.nonSevereReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndNonSevere);
-
-    this.rejectedIssues = IterableUtils.countMatches(issuesByUser,
-        TestingEffortPerTimeFrame.RELEASE_REJECTIONS);
-
-    this.successRatio = 0.0;
-    if (this.testReport.getIssuesReported() != 0) {
-      this.successRatio = this.nextReleaseFixes / (double) this.testReport.getIssuesReported();
+    public TesterBehaviour(TestingEffortPerTimeFrame releaseTestingEffort) {
+        this.testReport = new TestReport();
+        this.testingEffort = releaseTestingEffort;
     }
 
-    // this.calculateRegressionFields();
-  }
+    /**
+     * Stores the behavior of a Tester on an Specific release.
+     *
+     * @param extendedUser  Tester.
+     * @param testingEffort Testing metrics for the release.
+     * @param issuesByUser  Issues reported.
+     */
+    @SuppressWarnings("unchecked")
+    public TesterBehaviour(ExtendedUser extendedUser, TestingEffortPerTimeFrame testingEffort,
+                           List<ExtendedIssue> issuesByUser) {
+        this.extendedUser = extendedUser;
+        this.testingEffort = testingEffort;
+        this.testReport = new TestReport(extendedUser.getUser(), issuesByUser,
+                testingEffort.getTimeFrame());
 
-  /**
-   * Get's an instance from a CSV Record.
-   * 
-   * @param csvRecord
-   *          CSV Record.
-   */
-  public TesterBehaviour(CSVRecord csvRecord) {
-    this.expectedInflatedFixes = Double
-        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES));
-    this.expectedSevereFixes = Double
-        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES));
-    this.expectedNonSevereFixes = Double
-        .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES));
-    this.nextReleaseFixes = Long
-        .parseLong(csvRecord.get(TestingCsvConfiguration.NEXT_RELEASE_FIXES));
-    this.expectedFixes = Double.parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_FIXES));
-  }
+        this.nextReleaseFixes = IterableUtils.countMatches(issuesByUser,
+                TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE);
 
-  /**
-   * The number of inflated issues must be less or equal than the number of
-   * non-severe issues found. In case this situation is detected, this logic
-   * will enforce the invariant.
-   */
-  public void enforceInvariants() {
-    if (this.testReport.getInflatedReports() > this.testReport.getNonSevereIssuesFound()) {
-      logger.fine("INVARINT VIOLATED! this.testReport.getInflatedReports() "
-          + this.testReport.getInflatedReports() + " this.testReport.getNonSevereIssuesFound() "
-          + this.testReport.getNonSevereIssuesFound());
-      this.testReport.setInflatedReports(this.testReport.getNonSevereIssuesFound());
-    }
-  }
+        Predicate<ExtendedIssue> fixedAndSevere = PredicateUtils
+                .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.SEVERE_REPORTED);
+        this.severeReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndSevere);
 
-  /**
-   * After all the proper values are being set, the expected number of fixes per
-   * release is estimated.
-   * 
-   * @throws NullPointerException
-   *           If this method is called when the TestingEffort reference hasn't
-   *           calculated release metrics through a calculateReleaseMetrics()
-   *           call.
-   */
-  public void calculateRegressionFields() throws NullPointerException {
-    this.expectedSevereFixes = this.testReport.getSevereIssuesFound()
-        * this.getFixProbabilityForSevere();
-    this.expectedInflatedFixes = this.testReport.getInflatedReports()
-        * this.getFixProbabilityForSevere();
-    this.expectedNonSevereFixes = this.testReport.getNonSevereIssuesReported()
-        * this.getFixProbabilityForNonSevere();
-    this.expectedFixes = this.getExpectedSevereFixes() + this.getExpectedNonSevereFixes()
-        + this.getExpectedInflatedFixes();
-  }
+        Predicate<ExtendedIssue> fixedAndDefault = PredicateUtils
+                .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.DEFAULT_REPORTED);
+        this.defaultReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndDefault);
 
-  public TestReport getTestReport() {
-    return testReport;
-  }
+        Predicate<ExtendedIssue> fixedAndNonSevere = PredicateUtils
+                .allPredicate(TestingEffortPerTimeFrame.FIXED_NEXT_RELEASE, TestReport.NON_SEVERE_REPORTED);
+        this.nonSevereReleaseFixes = IterableUtils.countMatches(issuesByUser, fixedAndNonSevere);
 
-  public Long getRejectedIssues() {
-    return rejectedIssues;
-  }
+        this.rejectedIssues = IterableUtils.countMatches(issuesByUser,
+                TestingEffortPerTimeFrame.RELEASE_REJECTIONS);
 
-  public Long getNextReleaseFixes() {
-    return nextReleaseFixes;
-  }
+        this.successRatio = 0.0;
+        if (this.testReport.getIssuesReported() != 0) {
+            this.successRatio = this.nextReleaseFixes / (double) this.testReport.getIssuesReported();
+        }
 
-  public ExtendedUser getExtendedUser() {
-    return extendedUser;
-  }
-
-  public TestingEffortPerTimeFrame getRelease() {
-    return testingEffort;
-  }
-
-  // TODO(cgavidia): Evaluate if this aggregation method is appropriate. The
-  // other implies an explosion in dimensionality.
-  public Long getExternalInflation() {
-    return this.testingEffort.getTimeFrameInflation() - this.testReport.getInflatedReports();
-  }
-
-  public Long getExternalSeverity() {
-    return this.testingEffort.getReleaseNonInflatedSeverity()
-        + this.testReport.getSevereIssuesFound();
-  }
-
-  private Double getFixProbabilityForSevere() {
-    double developerProductivity = this.testingEffort.getDeveloperProductivity();
-    long releaseReportedSeverity = this.testingEffort.getTimeFrameInflation()
-        + this.testingEffort.getReleaseNonInflatedSeverity();
-
-    double probability = developerProductivity / releaseReportedSeverity;
-
-    if (probability > 1 || releaseReportedSeverity == 0) {
-      probability = 1;
+        // this.calculateRegressionFields();
     }
 
-    return probability;
-  }
-
-  private Double getFixProbabilityForNonSevere() {
-    // TODO(cgavidia): Evaluate numerator.
-    double productivityRemaining = this.testingEffort.getDeveloperProductivity()
-        - this.testingEffort.getTimeFrameInflation()
-        - this.testingEffort.getReleaseNonInflatedSeverity();
-
-    long releaseReportedNonSeverity = this.testingEffort.getReleaseReportedNonSeverity();
-    double probability = productivityRemaining / releaseReportedNonSeverity;
-
-    if (probability < 0) {
-      return 0.0;
+    /**
+     * Get's an instance from a CSV Record.
+     *
+     * @param csvRecord CSV Record.
+     */
+    public TesterBehaviour(CSVRecord csvRecord) {
+        this.expectedInflatedFixes = Double
+                .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES));
+        this.expectedSevereFixes = Double
+                .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES));
+        this.expectedNonSevereFixes = Double
+                .parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES));
+        this.nextReleaseFixes = Long
+                .parseLong(csvRecord.get(TestingCsvConfiguration.NEXT_RELEASE_FIXES));
+        this.expectedFixes = Double.parseDouble(csvRecord.get(TestingCsvConfiguration.EXPECTED_FIXES));
     }
 
-    if (probability > 1 || releaseReportedNonSeverity == 0) {
-      return 1.0;
+    /**
+     * The number of inflated issues must be less or equal than the number of
+     * non-severe issues found. In case this situation is detected, this logic
+     * will enforce the invariant.
+     */
+    public void enforceInvariants() {
+        if (this.testReport.getInflatedReports() > this.testReport.getNonSevereIssuesFound()) {
+            logger.fine("INVARINT VIOLATED! this.testReport.getInflatedReports() "
+                    + this.testReport.getInflatedReports() + " this.testReport.getNonSevereIssuesFound() "
+                    + this.testReport.getNonSevereIssuesFound());
+            this.testReport.setInflatedReports(this.testReport.getNonSevereIssuesFound());
+        }
     }
 
-    return probability;
-  }
-
-  private Double getExpectedSevereFixes() {
-    return expectedSevereFixes;
-  }
-
-  private Double getExpectedInflatedFixes() {
-    return expectedInflatedFixes;
-  }
-
-  private Double getExpectedNonSevereFixes() {
-    return expectedNonSevereFixes;
-  }
-
-  public Double getExpectedFixes() {
-    return expectedFixes;
-  }
-
-  // TODO(cgavidia): We need to refactor this cumbersome two-method way of doing
-  // this.
-
-  @Override
-  public void configureCsvRecord() {
-
-    this.addDataItem(TestingCsvConfiguration.RELEASE, this.testingEffort.getTimeFrame());
-    this.addDataItem(TestingCsvConfiguration.TESTER, this.extendedUser.getUser().getName());
-    this.addDataItem(TestingCsvConfiguration.TESTER_PARTICIPATION,
-        this.extendedUser.getReleaseParticipation());
-    this.addDataItem(TestingCsvConfiguration.TESTER_INFLATION_SLOPE,
-        this.extendedUser.getRegressionForInflation().getSlope());
-
-    this.addDataItem(TestingCsvConfiguration.NONSEVERE_INFLATION_RATIO,
-        this.extendedUser.getNonSevereInflationRatio());
-    this.addDataItem(TestingCsvConfiguration.DEFAULT_INFLATION_RATIO,
-        this.extendedUser.getDefaultInflationRatio());
-
-    this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY,
-        this.testingEffort.getDeveloperProductivity());
-    this.addDataItem(TestingCsvConfiguration.RELEASE_REJECTION,
-        this.testingEffort.getTimeFrameRejection());
-
-    this.addDataItem(TestingCsvConfiguration.TESTER_PRODUCTIVITY,
-        this.testingEffort.getTestTeamProductivity());
-    this.addDataItem(TestingCsvConfiguration.NUMBER_OF_TESTERS,
-        this.testingEffort.getNumberOfTesters());
-    this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO,
-        this.testingEffort.getDeveloperProductivityRatio());
-    this.addDataItem(TestingCsvConfiguration.TIME_FRAME_INFLATION,
-        this.testingEffort.getTimeFrameInflation());
-    this.addDataItem(TestingCsvConfiguration.TIMEFRAME_INFLATION_RATIO,
-        this.testingEffort.getTimeFrameInflationRatio());
-    this.addDataItem(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO,
-        this.testingEffort.getTimeFrameSeverityRatio());
-    this.addDataItem(TestingCsvConfiguration.AVG_INFLATION_RATIO,
-        this.testingEffort.getAverageForInflationRatio());
-    this.addDataItem(TestingCsvConfiguration.MED_INFLATION_RATIO,
-        this.testingEffort.getMedianForInflationRatio());
-    this.addDataItem(TestingCsvConfiguration.VAR_INFLATION_RATIO,
-        this.testingEffort.getVarianceForInflationRatio());
-
-    this.addDataItem(TestingCsvConfiguration.ISSUES_REPORTED, this.testReport.getIssuesReported());
-
-    this.addDataItem(TestingCsvConfiguration.INFLATION_RATIO, this.testReport.getInflationRatio());
-    this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
-        this.testReport.getSevereRatioInReport());
-    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_RATIO_REPORTED,
-        this.testReport.getNonSevereRationInReport());
-    this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
-        this.testReport.getSevereRatioInReport());
-
-    this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_FOUND,
-        this.testReport.getSevereIssuesFound());
-    this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_FOUND,
-        this.testReport.getDefaultIssuesFound());
-    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND,
-        this.testReport.getNonSevereIssuesFound());
-
-    this.addDataItem(TestingCsvConfiguration.POSSIBLE_INFLATIONS,
-        this.testReport.getInflatedReports());
-
-    this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_REPORTED,
-        this.testReport.getSevereIssuesReported());
-    this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_REPORTED,
-        this.testReport.getDefaultIssuesReported());
-    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED,
-        this.testReport.getNonSevereIssuesReported());
-
-    this.addDataItem(TestingCsvConfiguration.EXTERNAL_INFLATION, this.getExternalInflation());
-    this.addDataItem(TestingCsvConfiguration.EXTERNAL_SEVERITY, this.getExternalSeverity());
-
-    this.addDataItem(TestingCsvConfiguration.NEXT_RELEASE_FIXES, this.getNextReleaseFixes());
-    this.addDataItem(TestingCsvConfiguration.SEVERE_RELEASE_FIXES, this.getSevereReleaseFixes());
-    this.addDataItem(TestingCsvConfiguration.DEFAULT_RELEASE_FIXES, this.getDefaultReleaseFixes());
-    this.addDataItem(TestingCsvConfiguration.NONSEVERE_RELEASE_FIXES,
-        this.getNonSevereReleaseFixes());
-
-    this.addDataItem(TestingCsvConfiguration.REJECTED_ISSUES, this.getRejectedIssues());
-    this.addDataItem(TestingCsvConfiguration.SUCCESS_RATIO, this.getSuccessRatio());
-    this.addDataItem(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY,
-        this.getFixProbabilityForSevere());
-    this.addDataItem(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY,
-        this.getFixProbabilityForNonSevere());
-    this.addDataItem(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES, this.getExpectedSevereFixes());
-    this.addDataItem(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES,
-        this.getExpectedInflatedFixes());
-    this.addDataItem(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES,
-        this.getExpectedNonSevereFixes());
-    this.addDataItem(TestingCsvConfiguration.EXPECTED_FIXES, this.getExpectedFixes());
-  }
-
-  public double getInflationRatio() {
-    return inflationRatio;
-  }
-
-  /**
-   * Calculates the inflation ratio, only if non-severe issues were found. Also,
-   * stores this value in the corresponding User.
-   * 
-   */
-  public void calculateInflatioRatio() {
-    this.inflationRatio = 0.0;
-
-    if (this.testReport.getNonSevereIssuesFound() > 0) {
-      this.inflationRatio = ((double) this.testReport.getInflatedReports())
-          / this.testReport.getNonSevereIssuesFound();
+    /**
+     * After all the proper values are being set, the expected number of fixes per
+     * release is estimated.
+     *
+     * @throws NullPointerException If this method is called when the TestingEffort reference hasn't
+     *                              calculated release metrics through a calculateReleaseMetrics()
+     *                              call.
+     */
+    public void calculateRegressionFields() throws NullPointerException {
+        this.expectedSevereFixes = this.testReport.getSevereIssuesFound()
+                * this.getFixProbabilityForSevere();
+        this.expectedInflatedFixes = this.testReport.getInflatedReports()
+                * this.getFixProbabilityForSevere();
+        this.expectedNonSevereFixes = this.testReport.getNonSevereIssuesReported()
+                * this.getFixProbabilityForNonSevere();
+        this.expectedFixes = this.getExpectedSevereFixes() + this.getExpectedNonSevereFixes()
+                + this.getExpectedInflatedFixes();
     }
 
-    this.extendedUser.getInflationRatios().put(this.testingEffort.getTimeFrame(),
-        this.inflationRatio);
-  }
+    public TestReport getTestReport() {
+        return testReport;
+    }
 
-  public void setInflationRatio(double inflationRatio) {
-    this.inflationRatio = inflationRatio;
-  }
+    public Long getRejectedIssues() {
+        return rejectedIssues;
+    }
 
-  public double getSuccessRatio() {
-    return successRatio;
-  }
+    public Long getNextReleaseFixes() {
+        return nextReleaseFixes;
+    }
 
-  public Long getSevereReleaseFixes() {
-    return severeReleaseFixes;
-  }
+    public ExtendedUser getExtendedUser() {
+        return extendedUser;
+    }
 
-  public Long getNonSevereReleaseFixes() {
-    return nonSevereReleaseFixes;
-  }
+    public TestingEffortPerTimeFrame getRelease() {
+        return testingEffort;
+    }
 
-  public Long getDefaultReleaseFixes() {
-    return defaultReleaseFixes;
-  }
+    // TODO(cgavidia): Evaluate if this aggregation method is appropriate. The
+    // other implies an explosion in dimensionality.
+    public Long getExternalInflation() {
+        return this.testingEffort.getTimeFrameInflation() - this.testReport.getInflatedReports();
+    }
 
-  @Override
-  public double getRegressandValue() {
-    return this.nextReleaseFixes;
-  }
+    public Long getExternalSeverity() {
+        return this.testingEffort.getReleaseNonInflatedSeverity()
+                + this.testReport.getSevereIssuesFound();
+    }
 
-  @Override
-  public double[] getRegressorValue() {
-    return new double[] { this.getExpectedInflatedFixes(), this.getExpectedSevereFixes(),
-        this.getExpectedNonSevereFixes() };
-  }
+    private Double getFixProbabilityForSevere() {
+        double developerProductivity = this.testingEffort.getDeveloperProductivity();
+        long releaseReportedSeverity = this.testingEffort.getTimeFrameInflation()
+                + this.testingEffort.getReleaseNonInflatedSeverity();
 
-  @Override
-  public double getExpectedRegresandValue() {
-    return this.expectedFixes;
-  }
+        double probability = developerProductivity / releaseReportedSeverity;
+
+        if (probability > 1 || releaseReportedSeverity == 0) {
+            probability = 1;
+        }
+
+        return probability;
+    }
+
+    private Double getFixProbabilityForNonSevere() {
+        // TODO(cgavidia): Evaluate numerator.
+        double productivityRemaining = this.testingEffort.getDeveloperProductivity()
+                - this.testingEffort.getTimeFrameInflation()
+                - this.testingEffort.getReleaseNonInflatedSeverity();
+
+        long releaseReportedNonSeverity = this.testingEffort.getReleaseReportedNonSeverity();
+        double probability = productivityRemaining / releaseReportedNonSeverity;
+
+        if (probability < 0) {
+            return 0.0;
+        }
+
+        if (probability > 1 || releaseReportedNonSeverity == 0) {
+            return 1.0;
+        }
+
+        return probability;
+    }
+
+    private Double getExpectedSevereFixes() {
+        return expectedSevereFixes;
+    }
+
+    private Double getExpectedInflatedFixes() {
+        return expectedInflatedFixes;
+    }
+
+    private Double getExpectedNonSevereFixes() {
+        return expectedNonSevereFixes;
+    }
+
+    public Double getExpectedFixes() {
+        return expectedFixes;
+    }
+
+    // TODO(cgavidia): We need to refactor this cumbersome two-method way of doing
+    // this.
+
+    @Override
+    public void configureCsvRecord() {
+
+        this.addDataItem(TestingCsvConfiguration.RELEASE, this.testingEffort.getTimeFrame());
+
+        this.addDataItem(TestingCsvConfiguration.TESTER, this.extendedUser.getUser().getName());
+        this.addDataItem(TestingCsvConfiguration.TESTER_PARTICIPATION,
+                this.extendedUser.getReleaseParticipation());
+        this.addDataItem(TestingCsvConfiguration.TESTER_REPORTED_ISSUES,
+                this.extendedUser.getIssuesReported());
+        this.addDataItem(TestingCsvConfiguration.TESTER_INFLATION_SLOPE,
+                this.extendedUser.getRegressionForInflation().getSlope());
+
+        this.addDataItem(TestingCsvConfiguration.NONSEVERE_INFLATION_RATIO,
+                this.extendedUser.getNonSevereInflationRatio());
+        this.addDataItem(TestingCsvConfiguration.DEFAULT_INFLATION_RATIO,
+                this.extendedUser.getDefaultInflationRatio());
+
+        this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY,
+                this.testingEffort.getDeveloperProductivity());
+        this.addDataItem(TestingCsvConfiguration.RELEASE_REJECTION,
+                this.testingEffort.getTimeFrameRejection());
+
+        this.addDataItem(TestingCsvConfiguration.TESTER_PRODUCTIVITY,
+                this.testingEffort.getTestTeamProductivity());
+        this.addDataItem(TestingCsvConfiguration.NUMBER_OF_TESTERS,
+                this.testingEffort.getNumberOfTesters());
+        this.addDataItem(TestingCsvConfiguration.DEVELOPER_PRODUCTIVITY_RATIO,
+                this.testingEffort.getDeveloperProductivityRatio());
+        this.addDataItem(TestingCsvConfiguration.TIME_FRAME_INFLATION,
+                this.testingEffort.getTimeFrameInflation());
+        this.addDataItem(TestingCsvConfiguration.TIMEFRAME_INFLATION_RATIO,
+                this.testingEffort.getTimeFrameInflationRatio());
+        this.addDataItem(TestingCsvConfiguration.RELEASE_SEVERITY_RATIO,
+                this.testingEffort.getTimeFrameSeverityRatio());
+        this.addDataItem(TestingCsvConfiguration.AVG_INFLATION_RATIO,
+                this.testingEffort.getAverageForInflationRatio());
+        this.addDataItem(TestingCsvConfiguration.MED_INFLATION_RATIO,
+                this.testingEffort.getMedianForInflationRatio());
+        this.addDataItem(TestingCsvConfiguration.VAR_INFLATION_RATIO,
+                this.testingEffort.getVarianceForInflationRatio());
+
+        this.addDataItem(TestingCsvConfiguration.ISSUES_REPORTED, this.testReport.getIssuesReported());
+
+        this.addDataItem(TestingCsvConfiguration.INFLATION_RATIO, this.testReport.getInflationRatio());
+        this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
+                this.testReport.getSevereRatioInReport());
+        this.addDataItem(TestingCsvConfiguration.NON_SEVERE_RATIO_REPORTED,
+                this.testReport.getNonSevereRationInReport());
+        this.addDataItem(TestingCsvConfiguration.SEVERE_RATIO_REPORTED,
+                this.testReport.getSevereRatioInReport());
+
+        this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_FOUND,
+                this.testReport.getSevereIssuesFound());
+        this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_FOUND,
+                this.testReport.getDefaultIssuesFound());
+        this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_FOUND,
+                this.testReport.getNonSevereIssuesFound());
+
+        this.addDataItem(TestingCsvConfiguration.POSSIBLE_INFLATIONS,
+                this.testReport.getInflatedReports());
+
+        this.addDataItem(TestingCsvConfiguration.SEVERE_ISSUES_REPORTED,
+                this.testReport.getSevereIssuesReported());
+        this.addDataItem(TestingCsvConfiguration.DEFAULT_ISSUES_REPORTED,
+                this.testReport.getDefaultIssuesReported());
+        this.addDataItem(TestingCsvConfiguration.NON_SEVERE_ISSUES_REPORTED,
+                this.testReport.getNonSevereIssuesReported());
+
+        this.addDataItem(TestingCsvConfiguration.EXTERNAL_INFLATION, this.getExternalInflation());
+        this.addDataItem(TestingCsvConfiguration.EXTERNAL_SEVERITY, this.getExternalSeverity());
+
+        this.addDataItem(TestingCsvConfiguration.NEXT_RELEASE_FIXES, this.getNextReleaseFixes());
+        this.addDataItem(TestingCsvConfiguration.SEVERE_RELEASE_FIXES, this.getSevereReleaseFixes());
+        this.addDataItem(TestingCsvConfiguration.DEFAULT_RELEASE_FIXES, this.getDefaultReleaseFixes());
+        this.addDataItem(TestingCsvConfiguration.NONSEVERE_RELEASE_FIXES,
+                this.getNonSevereReleaseFixes());
+
+        this.addDataItem(TestingCsvConfiguration.REJECTED_ISSUES, this.getRejectedIssues());
+        this.addDataItem(TestingCsvConfiguration.SUCCESS_RATIO, this.getSuccessRatio());
+        this.addDataItem(TestingCsvConfiguration.SEVERE_FIX_PROBABILITY,
+                this.getFixProbabilityForSevere());
+        this.addDataItem(TestingCsvConfiguration.NON_SEVERE_FIX_PROBABILITY,
+                this.getFixProbabilityForNonSevere());
+        this.addDataItem(TestingCsvConfiguration.EXPECTED_SEVERE_FIXES, this.getExpectedSevereFixes());
+        this.addDataItem(TestingCsvConfiguration.EXPECTED_INFLATED_FIXES,
+                this.getExpectedInflatedFixes());
+        this.addDataItem(TestingCsvConfiguration.EXPECTED_NON_SEVERE_FIXES,
+                this.getExpectedNonSevereFixes());
+        this.addDataItem(TestingCsvConfiguration.EXPECTED_FIXES, this.getExpectedFixes());
+    }
+
+    public double getInflationRatio() {
+        return inflationRatio;
+    }
+
+    /**
+     * Calculates the inflation ratio, only if non-severe issues were found. Also,
+     * stores this value in the corresponding User.
+     */
+    public void calculateInflatioRatio() {
+        this.inflationRatio = 0.0;
+
+        if (this.testReport.getNonSevereIssuesFound() > 0) {
+            this.inflationRatio = ((double) this.testReport.getInflatedReports())
+                    / this.testReport.getNonSevereIssuesFound();
+        }
+
+        this.extendedUser.getInflationRatios().put(this.testingEffort.getTimeFrame(),
+                this.inflationRatio);
+    }
+
+    public void setInflationRatio(double inflationRatio) {
+        this.inflationRatio = inflationRatio;
+    }
+
+    public double getSuccessRatio() {
+        return successRatio;
+    }
+
+    public Long getSevereReleaseFixes() {
+        return severeReleaseFixes;
+    }
+
+    public Long getNonSevereReleaseFixes() {
+        return nonSevereReleaseFixes;
+    }
+
+    public Long getDefaultReleaseFixes() {
+        return defaultReleaseFixes;
+    }
+
+    @Override
+    public double getRegressandValue() {
+        return this.nextReleaseFixes;
+    }
+
+    @Override
+    public double[] getRegressorValue() {
+        return new double[]{this.getExpectedInflatedFixes(), this.getExpectedSevereFixes(),
+                this.getExpectedNonSevereFixes()};
+    }
+
+    @Override
+    public double getExpectedRegresandValue() {
+        return this.expectedFixes;
+    }
 
 }
